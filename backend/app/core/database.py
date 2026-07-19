@@ -11,6 +11,7 @@ settings = get_settings()
 engine = create_engine(
     settings.database_url,
     pool_pre_ping=True,
+    echo=False,
 )
 
 SessionLocal = sessionmaker(
@@ -22,13 +23,13 @@ SessionLocal = sessionmaker(
 
 
 class Base(DeclarativeBase):
-    """Base class for all PoultryPulse SQLAlchemy models."""
+    """Base class inherited by all PoultryPulse database models."""
 
     pass
 
 
 def get_database_session() -> Generator[Session, None, None]:
-    """Provide a database session to a FastAPI route."""
+    """Create and safely close a database session for a request."""
 
     database_session = SessionLocal()
 
