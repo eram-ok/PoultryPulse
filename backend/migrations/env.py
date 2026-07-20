@@ -6,6 +6,7 @@ from sqlalchemy import engine_from_config, pool
 from app.core.config import get_settings
 from app.core.database import Base
 from app.modules.auth import models as auth_models  # noqa: F401
+from app.modules.bird_losses import models as bird_loss_models  # noqa: F401
 from app.modules.eggs import models as egg_models  # noqa: F401
 from app.modules.farms import models as farm_models  # noqa: F401
 from app.modules.feed import models as feed_models  # noqa: F401
@@ -75,3 +76,4 @@ if context.is_offline_mode():
     run_migrations_offline()
 else:
     run_migrations_online()
+

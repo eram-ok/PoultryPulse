@@ -34,6 +34,7 @@ def test_expected_tables_exist() -> None:
         "feed_purchases",
         "feed_usages",
         "feed_inventory_transactions",
+        "bird_loss_records",
     }
 
     assert expected_tables.issubset(table_names)
