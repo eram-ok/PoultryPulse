@@ -26,6 +26,8 @@ from app.modules.bird_losses.router import (
 
 from app.modules.health.router import router as health_router
 
+from app.modules.sales.router import router as sales_router
+
 settings = get_settings()
 
 router = APIRouter()
@@ -60,3 +62,4 @@ router.include_router(eggs_router)
 router.include_router(feed_router)
 router.include_router(bird_losses_router)
 router.include_router(health_router)
+router.include_router(sales_router)

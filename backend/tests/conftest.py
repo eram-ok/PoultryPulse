@@ -167,6 +167,46 @@ REQUIRED_TEST_PERMISSIONS = [
         "health",
         "Resolve health incidents and treatments",
     ),
+    (
+        "sales.view",
+        "sales",
+        "View Sales",
+    ),
+    (
+        "customers.manage",
+        "sales",
+        "Manage Customers",
+    ),
+    (
+        "sales.create",
+        "sales",
+        "Create Sales",
+    ),
+    (
+        "sales.confirm",
+        "sales",
+        "Confirm Sales",
+    ),
+    (
+        "sales.cancel",
+        "sales",
+        "Cancel Sales",
+    ),
+    (
+        "payments.record",
+        "sales",
+        "Record Payments",
+    ),
+    (
+        "payments.reverse",
+        "sales",
+        "Reverse Payments",
+    ),
+    (
+        "sales.returns",
+        "sales",
+        "Manage Sale Returns",
+    ),
 ]
 
 

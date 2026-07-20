@@ -40,13 +40,6 @@ def test_expected_tables_exist() -> None:
         "vaccination_administrations",
         "health_incidents",
         "treatment_records",
-        "sales_customers",
-        "sales",
-        "sale_items",
-        "sale_payments",
-        "sale_returns",
-        "sale_return_items",
-        "customer_ledger_entries",
     }
 
     assert expected_tables.issubset(table_names)
