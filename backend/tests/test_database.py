@@ -10,7 +10,7 @@ def test_database_connection() -> None:
     assert result == 1
 
 
-def test_initial_tables_exist() -> None:
+def test_expected_tables_exist() -> None:
     inspector = inspect(engine)
     table_names = set(inspector.get_table_names())
 
@@ -18,6 +18,11 @@ def test_initial_tables_exist() -> None:
         "alembic_version",
         "farms",
         "farm_settings",
+        "permissions",
+        "roles",
+        "role_permissions",
+        "users",
+        "user_roles",
     }
 
     assert expected_tables.issubset(table_names)
