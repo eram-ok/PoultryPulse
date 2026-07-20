@@ -5,6 +5,7 @@ from fastapi import APIRouter
 from app.core.config import get_settings
 from app.modules.auth.router import router as auth_router
 from app.modules.farms.router import router as farms_router
+from app.modules.houses.router import router as houses_router
 from app.modules.users.router import (
     roles_router,
     router as users_router,
@@ -37,3 +38,4 @@ router.include_router(auth_router)
 router.include_router(users_router)
 router.include_router(roles_router)
 router.include_router(farms_router)
+router.include_router(houses_router)

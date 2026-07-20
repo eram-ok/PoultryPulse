@@ -28,6 +28,9 @@ REQUIRED_TEST_PERMISSIONS = [
     ("users.deactivate", "users", "Deactivate users"),
     ("roles.view", "roles", "View roles"),
     ("roles.assign", "roles", "Assign roles"),
+    ("houses.view", "houses", "View poultry houses"),
+    ("houses.create", "houses", "Create poultry houses"),
+    ("houses.update", "houses", "Update poultry houses"),
 ]
 
 

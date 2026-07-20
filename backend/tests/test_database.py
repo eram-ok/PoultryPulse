@@ -24,6 +24,7 @@ def test_expected_tables_exist() -> None:
         "users",
         "user_roles",
         "refresh_tokens",
+        "poultry_houses",
     }
 
     assert expected_tables.issubset(table_names)
