@@ -132,6 +132,41 @@ REQUIRED_TEST_PERMISSIONS = [
         "bird_losses",
         "Reverse mortality and culling records",
     ),
+    (
+        "health.view",
+        "health",
+        "View vaccination and health records",
+    ),
+    (
+        "health.products.manage",
+        "health",
+        "Manage veterinary health products",
+    ),
+    (
+        "health.vaccinations.schedule",
+        "health",
+        "Schedule flock vaccinations",
+    ),
+    (
+        "health.vaccinations.complete",
+        "health",
+        "Complete scheduled vaccinations",
+    ),
+    (
+        "health.incidents.manage",
+        "health",
+        "Manage flock health incidents",
+    ),
+    (
+        "health.treatments.manage",
+        "health",
+        "Manage flock treatment records",
+    ),
+    (
+        "health.resolve",
+        "health",
+        "Resolve health incidents and treatments",
+    ),
 ]
 
 

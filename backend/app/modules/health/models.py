@@ -397,6 +397,7 @@ class VaccinationSchedule(Base):
             in {
                 VaccinationScheduleStatus.SCHEDULED.value,
                 VaccinationScheduleStatus.DUE.value,
+                VaccinationScheduleStatus.MISSED.value,
             }
             and self.scheduled_date < date.today()
         )
