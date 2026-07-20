@@ -6,6 +6,7 @@ from app.core.config import get_settings
 from app.modules.auth.router import router as auth_router
 from app.modules.eggs.router import router as eggs_router
 from app.modules.farms.router import router as farms_router
+from app.modules.feed.router import router as feed_router
 from app.modules.flocks.router import router as flocks_router
 from app.modules.houses.router import router as houses_router
 from app.modules.production.router import (
@@ -51,3 +52,4 @@ router.include_router(suppliers_router)
 router.include_router(flocks_router)
 router.include_router(production_router)
 router.include_router(eggs_router)
+router.include_router(feed_router)

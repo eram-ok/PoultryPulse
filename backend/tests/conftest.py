@@ -87,6 +87,36 @@ REQUIRED_TEST_PERMISSIONS = [
         "eggs",
         "Reverse egg inventory transactions",
     ),
+    (
+        "feed.view",
+        "feed",
+        "View feed inventory and usage",
+    ),
+    (
+        "feed.items.manage",
+        "feed",
+        "Manage feed items",
+    ),
+    (
+        "feed.purchases.create",
+        "feed",
+        "Record feed purchases",
+    ),
+    (
+        "feed.usage.record",
+        "feed",
+        "Record flock feed usage",
+    ),
+    (
+        "feed.adjust",
+        "feed",
+        "Adjust feed inventory",
+    ),
+    (
+        "feed.reverse",
+        "feed",
+        "Reverse feed inventory transactions",
+    ),
 ]
 
 
