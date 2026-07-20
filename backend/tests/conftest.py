@@ -42,6 +42,31 @@ REQUIRED_TEST_PERMISSIONS = [
         "flocks",
         "Adjust flock population",
     ),
+    (
+        "production.view",
+        "production",
+        "View production",
+    ),
+    (
+        "production.create",
+        "production",
+        "Create production",
+    ),
+    (
+        "production.submit",
+        "production",
+        "Submit production",
+    ),
+    (
+        "production.confirm",
+        "production",
+        "Confirm production",
+    ),
+    (
+        "production.adjust",
+        "production",
+        "Adjust production",
+    ),
 ]
 
 
