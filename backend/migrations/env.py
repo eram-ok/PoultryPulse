@@ -9,6 +9,7 @@ from app.modules.auth import models as auth_models  # noqa: F401
 from app.modules.farms import models as farm_models  # noqa: F401
 from app.modules.flocks import models as flock_models  # noqa: F401
 from app.modules.houses import models as house_models  # noqa: F401
+from app.modules.production import models as production_models  # noqa: F401
 from app.modules.suppliers import models as supplier_models  # noqa: F401
 from app.modules.users import models as user_models  # noqa: F401
 

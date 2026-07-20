@@ -28,6 +28,7 @@ def test_expected_tables_exist() -> None:
         "suppliers",
         "flocks",
         "flock_population_transactions",
+        "daily_egg_productions",
     }
 
     assert expected_tables.issubset(table_names)
