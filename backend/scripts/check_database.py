@@ -1,4 +1,4 @@
-﻿from sqlalchemy import text
+from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.core.database import engine
@@ -9,17 +9,21 @@ def main() -> None:
 
     try:
         with engine.connect() as connection:
-            result = connection.execute(
-                text(
-                    """
+            result = (
+                connection.execute(
+                    text(
+                        """
                     SELECT
                         current_database() AS database_name,
                         current_user AS database_user,
                         current_setting('TimeZone') AS timezone,
                         version() AS postgres_version
                     """
+                    )
                 )
-            ).mappings().one()
+                .mappings()
+                .one()
+            )
 
         print("PoultryPulse database connection successful.")
         print(f"Database: {result['database_name']}")

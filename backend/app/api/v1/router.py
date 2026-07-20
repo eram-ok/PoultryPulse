@@ -1,11 +1,13 @@
-﻿from datetime import UTC, datetime
+from datetime import UTC, datetime
 
 from fastapi import APIRouter
 
 from app.core.config import get_settings
+from app.modules.farms.router import router as farms_router
 
 
 settings = get_settings()
+
 router = APIRouter()
 
 
@@ -24,3 +26,6 @@ def health_check() -> dict[str, str]:
         "environment": settings.app_environment,
         "timestamp": datetime.now(UTC).isoformat(),
     }
+
+
+router.include_router(farms_router)

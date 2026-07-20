@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import uuid
 from datetime import datetime
@@ -130,13 +130,11 @@ class FarmSettings(Base):
             name="ck_farm_settings_eggs_per_tray_positive",
         ),
         CheckConstraint(
-            "low_production_threshold >= 0 "
-            "AND low_production_threshold <= 100",
+            "low_production_threshold >= 0 AND low_production_threshold <= 100",
             name="ck_farm_settings_low_production_percentage",
         ),
         CheckConstraint(
-            "mortality_alert_threshold >= 0 "
-            "AND mortality_alert_threshold <= 100",
+            "mortality_alert_threshold >= 0 AND mortality_alert_threshold <= 100",
             name="ck_farm_settings_mortality_percentage",
         ),
         CheckConstraint(
@@ -148,8 +146,7 @@ class FarmSettings(Base):
             name="ck_farm_settings_session_timeout_positive",
         ),
         CheckConstraint(
-            "maximum_discount_percentage >= 0 "
-            "AND maximum_discount_percentage <= 100",
+            "maximum_discount_percentage >= 0 AND maximum_discount_percentage <= 100",
             name="ck_farm_settings_discount_percentage",
         ),
     )

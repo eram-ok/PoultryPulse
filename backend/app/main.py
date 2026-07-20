@@ -1,7 +1,9 @@
-﻿from fastapi import FastAPI
+from fastapi import FastAPI
 
 from app.api.v1.router import router as api_v1_router
 from app.core.config import get_settings
+from app.core.exception_handlers import application_error_handler
+from app.core.exceptions import ApplicationError
 
 
 settings = get_settings()
@@ -14,6 +16,11 @@ app = FastAPI(
         "for layer poultry farms."
     ),
     debug=settings.app_debug,
+)
+
+app.add_exception_handler(
+    ApplicationError,
+    application_error_handler,
 )
 
 

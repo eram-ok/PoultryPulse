@@ -1,13 +1,11 @@
-﻿from sqlalchemy import inspect, text
+from sqlalchemy import inspect, text
 
 from app.core.database import engine
 
 
 def test_database_connection() -> None:
     with engine.connect() as connection:
-        result = connection.execute(
-            text("SELECT 1")
-        ).scalar_one()
+        result = connection.execute(text("SELECT 1")).scalar_one()
 
     assert result == 1
 
