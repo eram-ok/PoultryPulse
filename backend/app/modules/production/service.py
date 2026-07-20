@@ -423,7 +423,28 @@ class DailyEggProductionService:
         production.confirmed_at = datetime.now(UTC)
         production.last_updated_by = confirmed_by
 
-        self.database_session.commit()
+        try:
+            self.database_session.flush()
+
+            from app.modules.eggs.service import (
+                EggInventoryService,
+            )
+
+            EggInventoryService(self.database_session).post_confirmed_production(
+                production,
+                confirmed_by,
+                commit=False,
+            )
+
+            self.database_session.commit()
+        except IntegrityError as exc:
+            self.database_session.rollback()
+
+            raise ResourceConflictError(
+                "The production record could not be "
+                "confirmed or posted to egg inventory.",
+                error_code=("production_confirmation_conflict"),
+            ) from exc
 
         return self._get_record(
             farm_id,

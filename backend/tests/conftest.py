@@ -67,6 +67,26 @@ REQUIRED_TEST_PERMISSIONS = [
         "production",
         "Adjust production",
     ),
+    (
+        "eggs.view",
+        "eggs",
+        "View egg inventory",
+    ),
+    (
+        "eggs.adjust",
+        "eggs",
+        "Adjust egg inventory",
+    ),
+    (
+        "eggs.issue",
+        "eggs",
+        "Issue eggs",
+    ),
+    (
+        "eggs.reverse",
+        "eggs",
+        "Reverse egg inventory transactions",
+    ),
 ]
 
 
