@@ -6,6 +6,7 @@ from sqlalchemy import engine_from_config, pool
 from app.core.config import get_settings
 from app.core.database import Base
 from app.modules.auth import models as auth_models  # noqa: F401
+from app.modules.eggs import models as egg_models  # noqa: F401
 from app.modules.farms import models as farm_models  # noqa: F401
 from app.modules.flocks import models as flock_models  # noqa: F401
 from app.modules.houses import models as house_models  # noqa: F401
