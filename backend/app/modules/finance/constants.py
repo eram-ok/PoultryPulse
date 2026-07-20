@@ -1,0 +1,56 @@
+from enum import StrEnum
+
+
+class ExpenseCategoryKind(StrEnum):
+    FEED = "FEED"
+    VETERINARY = "VETERINARY"
+    LABOUR = "LABOUR"
+    UTILITIES = "UTILITIES"
+    TRANSPORT = "TRANSPORT"
+    EQUIPMENT = "EQUIPMENT"
+    MAINTENANCE = "MAINTENANCE"
+    HOUSING = "HOUSING"
+    ADMINISTRATION = "ADMINISTRATION"
+    BIOSECURITY = "BIOSECURITY"
+    OTHER = "OTHER"
+
+
+class FinanceDocumentStatus(StrEnum):
+    DRAFT = "DRAFT"
+    POSTED = "POSTED"
+    VOIDED = "VOIDED"
+
+
+class SupplierBillStatus(StrEnum):
+    UNPAID = "UNPAID"
+    PARTIALLY_PAID = "PARTIALLY_PAID"
+    PAID = "PAID"
+    VOIDED = "VOIDED"
+
+
+class FinancePaymentMethod(StrEnum):
+    CASH = "CASH"
+    MOBILE_MONEY = "MOBILE_MONEY"
+    BANK_TRANSFER = "BANK_TRANSFER"
+    CHEQUE = "CHEQUE"
+    OTHER = "OTHER"
+
+
+class FinancePaymentStatus(StrEnum):
+    POSTED = "POSTED"
+    REVERSED = "REVERSED"
+
+
+class CashFlowDirection(StrEnum):
+    INFLOW = "INFLOW"
+    OUTFLOW = "OUTFLOW"
+
+
+class CashLedgerEntryType(StrEnum):
+    OPENING_BALANCE = "OPENING_BALANCE"
+    SALES_RECEIPT = "SALES_RECEIPT"
+    EXPENSE_PAYMENT = "EXPENSE_PAYMENT"
+    SUPPLIER_BILL_PAYMENT = "SUPPLIER_BILL_PAYMENT"
+    OTHER_INCOME = "OTHER_INCOME"
+    ADJUSTMENT = "ADJUSTMENT"
+    REVERSAL = "REVERSAL"

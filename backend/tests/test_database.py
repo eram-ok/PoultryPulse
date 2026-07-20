@@ -47,6 +47,11 @@ def test_expected_tables_exist() -> None:
         "sale_returns",
         "sale_return_items",
         "customer_ledger_entries",
+        "finance_expense_categories",
+        "finance_expenses",
+        "supplier_bills",
+        "supplier_bill_payments",
+        "cash_ledger_entries",
     }
 
     assert expected_tables.issubset(table_names)
