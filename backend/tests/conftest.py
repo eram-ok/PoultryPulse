@@ -117,6 +117,21 @@ REQUIRED_TEST_PERMISSIONS = [
         "feed",
         "Reverse feed inventory transactions",
     ),
+    (
+        "bird_losses.view",
+        "bird_losses",
+        "View mortality and culling records",
+    ),
+    (
+        "bird_losses.record",
+        "bird_losses",
+        "Record mortality and culling",
+    ),
+    (
+        "bird_losses.reverse",
+        "bird_losses",
+        "Reverse mortality and culling records",
+    ),
 ]
 
 

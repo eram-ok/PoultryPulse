@@ -19,6 +19,9 @@ from app.modules.users.router import (
     roles_router,
     router as users_router,
 )
+from app.modules.bird_losses.router import (
+    router as bird_losses_router,
+)
 
 
 settings = get_settings()
@@ -53,3 +56,4 @@ router.include_router(flocks_router)
 router.include_router(production_router)
 router.include_router(eggs_router)
 router.include_router(feed_router)
+router.include_router(bird_losses_router)
