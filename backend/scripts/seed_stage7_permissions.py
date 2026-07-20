@@ -8,7 +8,7 @@ from app.modules.farms.models import Farm
 from app.modules.users.models import Permission, Role
 
 
-SUPPLIER_PERMISSIONS = [
+STAGE_7_PERMISSIONS = [
     (
         "suppliers.view",
         "suppliers",
@@ -24,6 +24,11 @@ SUPPLIER_PERMISSIONS = [
         "suppliers",
         "Update suppliers",
     ),
+    (
+        "flocks.population.adjust",
+        "flocks",
+        "Adjust flock population",
+    ),
 ]
 
 
@@ -32,6 +37,7 @@ ROLE_PERMISSION_CODES = {
         "suppliers.view",
         "suppliers.create",
         "suppliers.update",
+        "flocks.population.adjust",
     },
     "Owner": {
         "suppliers.view",
@@ -40,15 +46,14 @@ ROLE_PERMISSION_CODES = {
         "suppliers.view",
         "suppliers.create",
         "suppliers.update",
+        "flocks.population.adjust",
     },
 }
 
 
 def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description=(
-            "Create Stage 7 supplier permissions and assign them to PoultryPulse roles."
-        )
+        description=("Configure Stage 7 PoultryPulse permissions.")
     )
 
     parser.add_argument(
@@ -72,7 +77,7 @@ def main() -> None:
 
         permission_map: dict[str, Permission] = {}
 
-        for code, module, name in SUPPLIER_PERMISSIONS:
+        for code, module, name in STAGE_7_PERMISSIONS:
             permission = database_session.scalar(
                 select(Permission).where(Permission.code == code)
             )

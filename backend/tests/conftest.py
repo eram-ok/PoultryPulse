@@ -31,6 +31,17 @@ REQUIRED_TEST_PERMISSIONS = [
     ("houses.view", "houses", "View poultry houses"),
     ("houses.create", "houses", "Create poultry houses"),
     ("houses.update", "houses", "Update poultry houses"),
+    ("suppliers.view", "suppliers", "View suppliers"),
+    ("suppliers.create", "suppliers", "Create suppliers"),
+    ("suppliers.update", "suppliers", "Update suppliers"),
+    ("flocks.view", "flocks", "View flocks"),
+    ("flocks.create", "flocks", "Create flocks"),
+    ("flocks.update", "flocks", "Update flocks"),
+    (
+        "flocks.population.adjust",
+        "flocks",
+        "Adjust flock population",
+    ),
 ]
 
 

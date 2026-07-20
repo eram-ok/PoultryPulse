@@ -9,6 +9,7 @@ from app.modules.flocks.models import (
     NEGATIVE_POPULATION_TRANSACTION_TYPES,
     POSITIVE_POPULATION_TRANSACTION_TYPES,
 )
+from app.modules.flocks.router import router
 
 __all__ = [
     "Flock",
@@ -18,4 +19,5 @@ __all__ = [
     "PopulationTransactionType",
     "NEGATIVE_POPULATION_TRANSACTION_TYPES",
     "POSITIVE_POPULATION_TRANSACTION_TYPES",
+    "router",
 ]
