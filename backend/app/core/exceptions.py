@@ -17,6 +17,20 @@ class ApplicationError(Exception):
             self.error_code = error_code
 
 
+class AuthenticationError(ApplicationError):
+    """Raised when authentication fails."""
+
+    status_code = 401
+    error_code = "authentication_failed"
+
+
+class AuthorizationError(ApplicationError):
+    """Raised when a user lacks permission for an action."""
+
+    status_code = 403
+    error_code = "permission_denied"
+
+
 class ResourceNotFoundError(ApplicationError):
     """Raised when a requested record does not exist."""
 

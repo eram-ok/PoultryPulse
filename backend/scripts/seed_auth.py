@@ -20,6 +20,7 @@ PERMISSIONS = [
     ("roles.update", "roles", "Update roles"),
     ("roles.assign", "roles", "Assign roles"),
     ("farms.view", "farms", "View farm information"),
+    ("farms.create", "farms", "Create farms"),
     ("farms.update", "farms", "Update farm information"),
     (
         "farms.settings.update",

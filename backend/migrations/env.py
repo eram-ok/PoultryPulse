@@ -5,6 +5,7 @@ from sqlalchemy import engine_from_config, pool
 
 from app.core.config import get_settings
 from app.core.database import Base
+from app.modules.auth import models as auth_models  # noqa: F401
 from app.modules.farms import models as farm_models  # noqa: F401
 from app.modules.users import models as user_models  # noqa: F401
 
@@ -24,7 +25,7 @@ target_metadata = Base.metadata
 
 
 def run_migrations_offline() -> None:
-    """Run migrations without creating a live connection."""
+    """Run migrations without a live database connection."""
 
     context.configure(
         url=settings.database_url,
@@ -40,7 +41,7 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
-    """Run migrations using a live connection."""
+    """Run migrations using a live database connection."""
 
     configuration = config.get_section(
         config.config_ini_section

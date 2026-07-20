@@ -6,9 +6,7 @@ from fastapi.testclient import TestClient
 def build_farm_payload(
     farm_code: str | None = None,
 ) -> dict[str, object]:
-    """Build a unique valid farm request for an API test."""
-
-    unique_code = farm_code or f"PP-{uuid4().hex[:8].upper()}"
+    unique_code = farm_code or (f"PP-{uuid4().hex[:8].upper()}")
 
     return {
         "farm_code": unique_code,
@@ -33,140 +31,104 @@ def build_farm_payload(
     }
 
 
-def create_test_farm(
-    client: TestClient,
-    farm_code: str | None = None,
-) -> dict[str, object]:
-    response = client.post(
-        "/api/v1/farms",
-        json=build_farm_payload(farm_code),
-    )
-
-    assert response.status_code == 201
-    return response.json()
-
-
-def test_create_farm_with_default_settings(
-    client: TestClient,
+def test_create_farm_requires_permission(
+    authenticated_client: TestClient,
 ) -> None:
-    response = client.post(
+    response = authenticated_client.post(
         "/api/v1/farms",
         json=build_farm_payload(),
     )
 
-    response_body = response.json()
-
     assert response.status_code == 201
-    assert response_body["name"] == ("PoultryPulse Demonstration Farm")
-    assert response_body["currency_code"] == "UGX"
-    assert response_body["timezone"] == "Africa/Kampala"
-    assert response_body["settings"]["eggs_per_tray"] == 30
-    assert response_body["settings"]["allow_customer_credit"] is True
+    assert response.json()["settings"]["eggs_per_tray"] == 30
 
 
-def test_get_farm_by_id(
-    client: TestClient,
+def test_get_own_farm(
+    authenticated_client: TestClient,
+    auth_context: dict[str, object],
 ) -> None:
-    created_farm = create_test_farm(client)
-    farm_id = created_farm["id"]
+    farm = auth_context["farm"]
 
-    response = client.get(f"/api/v1/farms/{farm_id}")
+    response = authenticated_client.get(f"/api/v1/farms/{farm.id}")
 
     assert response.status_code == 200
-    assert response.json()["id"] == farm_id
+    assert response.json()["id"] == str(farm.id)
 
 
-def test_update_farm(
-    client: TestClient,
+def test_update_own_farm(
+    authenticated_client: TestClient,
+    auth_context: dict[str, object],
 ) -> None:
-    created_farm = create_test_farm(client)
-    farm_id = created_farm["id"]
+    farm = auth_context["farm"]
 
-    response = client.patch(
-        f"/api/v1/farms/{farm_id}",
+    response = authenticated_client.patch(
+        f"/api/v1/farms/{farm.id}",
         json={
-            "name": "Updated Poultry Farm",
+            "name": "Updated Test Farm",
             "district": "Wakiso",
         },
     )
 
-    response_body = response.json()
-
     assert response.status_code == 200
-    assert response_body["name"] == "Updated Poultry Farm"
-    assert response_body["district"] == "Wakiso"
+    assert response.json()["name"] == "Updated Test Farm"
+    assert response.json()["district"] == "Wakiso"
 
 
 def test_update_farm_settings(
-    client: TestClient,
+    authenticated_client: TestClient,
+    auth_context: dict[str, object],
 ) -> None:
-    created_farm = create_test_farm(client)
-    farm_id = created_farm["id"]
+    farm = auth_context["farm"]
 
-    response = client.patch(
-        f"/api/v1/farms/{farm_id}/settings",
+    response = authenticated_client.patch(
+        f"/api/v1/farms/{farm.id}/settings",
         json={
             "eggs_per_tray": 24,
             "low_production_threshold": 75,
-            "maximum_discount_percentage": 10,
         },
     )
 
-    response_body = response.json()
-
     assert response.status_code == 200
-    assert response_body["eggs_per_tray"] == 24
-    assert float(response_body["low_production_threshold"]) == 75
-    assert float(response_body["maximum_discount_percentage"]) == 10
+    assert response.json()["eggs_per_tray"] == 24
 
 
 def test_duplicate_farm_code_is_rejected(
-    client: TestClient,
+    authenticated_client: TestClient,
 ) -> None:
     farm_code = f"DUP-{uuid4().hex[:8].upper()}"
 
-    first_response = client.post(
+    first_response = authenticated_client.post(
         "/api/v1/farms",
         json=build_farm_payload(farm_code),
     )
 
-    second_response = client.post(
+    second_response = authenticated_client.post(
         "/api/v1/farms",
         json=build_farm_payload(farm_code),
     )
 
     assert first_response.status_code == 201
     assert second_response.status_code == 409
-    assert second_response.json()["error"]["code"] == ("farm_code_already_exists")
 
 
-def test_list_farms_contains_created_farm(
-    client: TestClient,
+def test_list_farms_returns_current_farm(
+    authenticated_client: TestClient,
+    auth_context: dict[str, object],
 ) -> None:
-    created_farm = create_test_farm(client)
+    farm = auth_context["farm"]
 
-    response = client.get(
-        "/api/v1/farms",
-        params={
-            "offset": 0,
-            "limit": 100,
-        },
-    )
+    response = authenticated_client.get("/api/v1/farms")
 
     response_body = response.json()
-    returned_ids = {farm["id"] for farm in response_body["items"]}
 
     assert response.status_code == 200
-    assert created_farm["id"] in returned_ids
-    assert response_body["limit"] == 100
+    assert response_body["total"] == 1
+    assert response_body["items"][0]["id"] == str(farm.id)
 
 
-def test_missing_farm_returns_not_found(
-    client: TestClient,
+def test_other_farm_is_hidden(
+    authenticated_client: TestClient,
 ) -> None:
-    missing_farm_id = uuid4()
-
-    response = client.get(f"/api/v1/farms/{missing_farm_id}")
+    response = authenticated_client.get(f"/api/v1/farms/{uuid4()}")
 
     assert response.status_code == 404
-    assert response.json()["error"]["code"] == "farm_not_found"

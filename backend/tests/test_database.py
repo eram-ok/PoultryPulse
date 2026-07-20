@@ -23,6 +23,7 @@ def test_expected_tables_exist() -> None:
         "role_permissions",
         "users",
         "user_roles",
+        "refresh_tokens",
     }
 
     assert expected_tables.issubset(table_names)

@@ -5,6 +5,8 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_database_session
+from app.core.exceptions import ResourceNotFoundError
+from app.modules.auth.dependencies import require_permissions
 from app.modules.farms.schemas import (
     FarmCreate,
     FarmListResponse,
@@ -14,6 +16,7 @@ from app.modules.farms.schemas import (
     FarmUpdate,
 )
 from app.modules.farms.service import FarmService
+from app.modules.users.models import User
 
 
 router = APIRouter(
@@ -27,6 +30,19 @@ DatabaseSession = Annotated[
 ]
 
 
+def verify_farm_access(
+    current_user: User,
+    farm_id: UUID,
+) -> None:
+    """Prevent users from accessing another farm's records."""
+
+    if current_user.farm_id != farm_id:
+        raise ResourceNotFoundError(
+            "The requested farm does not exist.",
+            error_code="farm_not_found",
+        )
+
+
 @router.post(
     "",
     response_model=FarmResponse,
@@ -36,9 +52,11 @@ DatabaseSession = Annotated[
 def create_farm(
     payload: FarmCreate,
     database_session: DatabaseSession,
+    current_user: Annotated[
+        User,
+        Depends(require_permissions("farms.create")),
+    ],
 ) -> FarmResponse:
-    """Register a farm and automatically create its settings."""
-
     farm = FarmService(database_session).create_farm(payload)
     return FarmResponse.model_validate(farm)
 
@@ -46,23 +64,27 @@ def create_farm(
 @router.get(
     "",
     response_model=FarmListResponse,
-    summary="List registered farms",
+    summary="List accessible farms",
 )
 def list_farms(
     database_session: DatabaseSession,
+    current_user: Annotated[
+        User,
+        Depends(require_permissions("farms.view")),
+    ],
     offset: Annotated[int, Query(ge=0)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
 ) -> FarmListResponse:
-    """Return a paginated collection of farms."""
+    farm = FarmService(database_session).get_farm(current_user.farm_id)
 
-    farms, total = FarmService(database_session).list_farms(
-        offset=offset,
-        limit=limit,
-    )
+    items = []
+
+    if offset == 0 and limit > 0:
+        items.append(FarmResponse.model_validate(farm))
 
     return FarmListResponse(
-        items=[FarmResponse.model_validate(farm) for farm in farms],
-        total=total,
+        items=items,
+        total=1,
         offset=offset,
         limit=limit,
     )
@@ -76,8 +98,12 @@ def list_farms(
 def get_farm(
     farm_id: UUID,
     database_session: DatabaseSession,
+    current_user: Annotated[
+        User,
+        Depends(require_permissions("farms.view")),
+    ],
 ) -> FarmResponse:
-    """Return one farm using its unique identifier."""
+    verify_farm_access(current_user, farm_id)
 
     farm = FarmService(database_session).get_farm(farm_id)
     return FarmResponse.model_validate(farm)
@@ -92,8 +118,12 @@ def update_farm(
     farm_id: UUID,
     payload: FarmUpdate,
     database_session: DatabaseSession,
+    current_user: Annotated[
+        User,
+        Depends(require_permissions("farms.update")),
+    ],
 ) -> FarmResponse:
-    """Update selected farm fields."""
+    verify_farm_access(current_user, farm_id)
 
     farm = FarmService(database_session).update_farm(
         farm_id,
@@ -111,10 +141,15 @@ def update_farm(
 def get_farm_settings(
     farm_id: UUID,
     database_session: DatabaseSession,
+    current_user: Annotated[
+        User,
+        Depends(require_permissions("farms.view")),
+    ],
 ) -> FarmSettingsResponse:
-    """Return the operational settings for one farm."""
+    verify_farm_access(current_user, farm_id)
 
     settings = FarmService(database_session).get_settings(farm_id)
+
     return FarmSettingsResponse.model_validate(settings)
 
 
@@ -127,8 +162,12 @@ def update_farm_settings(
     farm_id: UUID,
     payload: FarmSettingsUpdate,
     database_session: DatabaseSession,
+    current_user: Annotated[
+        User,
+        Depends(require_permissions("farms.settings.update")),
+    ],
 ) -> FarmSettingsResponse:
-    """Update selected operational settings for one farm."""
+    verify_farm_access(current_user, farm_id)
 
     settings = FarmService(database_session).update_settings(
         farm_id,

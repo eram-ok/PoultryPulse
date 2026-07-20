@@ -14,7 +14,7 @@ password_hasher = PasswordHash.recommended()
 
 
 def hash_password(password: str) -> str:
-    """Create a secure one-way hash from a plain-text password."""
+    """Create a secure one-way password hash."""
 
     return password_hasher.hash(password)
 
@@ -23,7 +23,7 @@ def verify_password(
     plain_password: str,
     password_hash: str,
 ) -> bool:
-    """Check whether a password matches a stored hash."""
+    """Check whether a plain password matches a stored hash."""
 
     return password_hasher.verify(
         plain_password,
@@ -36,7 +36,7 @@ def create_access_token(
     *,
     additional_claims: dict[str, Any] | None = None,
 ) -> str:
-    """Create a signed PoultryPulse access token."""
+    """Create a signed short-lived access token."""
 
     issued_at = datetime.now(UTC)
     expires_at = issued_at + timedelta(minutes=settings.access_token_expire_minutes)
@@ -64,7 +64,7 @@ def create_refresh_token(
     *,
     additional_claims: dict[str, Any] | None = None,
 ) -> str:
-    """Create a signed PoultryPulse refresh token."""
+    """Create a signed long-lived refresh token."""
 
     issued_at = datetime.now(UTC)
     expires_at = issued_at + timedelta(days=settings.refresh_token_expire_days)
@@ -91,12 +91,19 @@ def decode_token(token: str) -> dict[str, Any]:
     """Decode and validate a signed PoultryPulse token."""
 
     try:
-        payload = jwt.decode(
+        return jwt.decode(
             token,
             settings.jwt_secret_key,
             algorithms=[settings.jwt_algorithm],
+            options={
+                "require": [
+                    "sub",
+                    "type",
+                    "iat",
+                    "exp",
+                    "jti",
+                ]
+            },
         )
     except InvalidTokenError as exc:
         raise ValueError("The authentication token is invalid or expired.") from exc
-
-    return payload
