@@ -35,6 +35,8 @@ from app.modules.finance import models as finance_models  # noqa: F401
 
 from app.modules.alerts import models as alerts_models # noqa: F401
 
+from app.modules.alerts import delivery_models as alert_delivery_models  # noqa: F401
+
 target_metadata = Base.metadata
 
 

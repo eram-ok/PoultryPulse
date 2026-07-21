@@ -267,6 +267,46 @@ REQUIRED_TEST_PERMISSIONS = [
         "alerts",
         "View Operational Alerts",
     ),
+    (
+        "alerts.manage",
+        "alerts",
+        "Manage Persistent Alerts",
+    ),
+    (
+        "alerts.assign",
+        "alerts",
+        "Assign Alerts to Users",
+    ),
+    (
+        "alerts.acknowledge",
+        "alerts",
+        "Acknowledge Alerts",
+    ),
+    (
+        "alerts.resolve",
+        "alerts",
+        "Resolve and Reopen Alerts",
+    ),
+    (
+        "alerts.refresh",
+        "alerts",
+        "Refresh Operational Alerts",
+    ),
+    (
+        "notifications.manage",
+        "alerts",
+        "Manage Notification Preferences",
+    ),
+    (
+        "notifications.send",
+        "alerts",
+        "Send and Retry Notifications",
+    ),
+    (
+        "notifications.view_deliveries",
+        "alerts",
+        "View Notification Delivery History",
+    ),
 ]
 
 

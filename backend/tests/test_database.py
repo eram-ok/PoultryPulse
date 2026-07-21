@@ -56,6 +56,8 @@ def test_expected_tables_exist() -> None:
         "alert_user_states",
         "notification_preferences",
         "alert_refresh_runs",
+        "notification_deliveries",
+        "alert_events",
     }
 
     assert expected_tables.issubset(table_names)
