@@ -1,15 +1,8 @@
-"use client"
-
 import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts"
-import { PackageCheck } from "lucide-react"
+  AlertTriangle,
+  PackageCheck,
+  Scale,
+} from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import {
@@ -19,88 +12,89 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { feedStock } from "@/lib/demo-data"
+import { formatNumber } from "@/lib/utils"
 
-export function FeedStockChart() {
+interface FeedStockChartProps {
+  totalFeedKg: number
+  lowStockItems: number
+}
+
+export function FeedStockChart({
+  totalFeedKg,
+  lowStockItems,
+}: FeedStockChartProps) {
   return (
     <Card className="rounded-2xl border-border/70 bg-card/82 backdrop-blur">
       <CardHeader>
         <div className="flex items-center justify-between gap-3">
           <CardTitle>Feed stock</CardTitle>
-          <Badge variant="outline" className="rounded-full">
-            <PackageCheck className="mr-1 size-3" />
-            4 items
+          <Badge
+            variant={lowStockItems > 0 ? "outline" : "secondary"}
+            className={
+              lowStockItems > 0
+                ? "rounded-full border-warning/30 bg-warning/8 text-warning"
+                : "rounded-full bg-primary/8 text-primary"
+            }
+          >
+            {lowStockItems > 0 ? (
+              <AlertTriangle className="mr-1 size-3" />
+            ) : (
+              <PackageCheck className="mr-1 size-3" />
+            )}
+            {lowStockItems > 0
+              ? `${lowStockItems} low stock`
+              : "Stock healthy"}
           </Badge>
         </div>
         <CardDescription>
-          Current kilograms against reorder thresholds.
+          Live feed inventory summary across all items.
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="h-[245px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={feedStock}
-              layout="vertical"
-              margin={{ top: 0, right: 8, bottom: 0, left: 12 }}
-            >
-              <CartesianGrid
-                horizontal={false}
-                stroke="var(--border)"
-                opacity={0.45}
-              />
-              <XAxis
-                type="number"
-                hide
-              />
-              <YAxis
-                dataKey="feed"
-                type="category"
-                axisLine={false}
-                tickLine={false}
-                width={92}
-                tick={{
-                  fill: "var(--muted-foreground)",
-                  fontSize: 11,
-                }}
-              />
-              <Tooltip
-                cursor={{ fill: "var(--muted)", opacity: 0.4 }}
-                contentStyle={{
-                  borderRadius: "14px",
-                  border: "1px solid var(--border)",
-                  background: "var(--popover)",
-                  color: "var(--popover-foreground)",
-                }}
-                formatter={(value) => [
-                  `${Number(value).toLocaleString()} kg`,
-                  "Available",
-                ]}
-              />
-              <Bar
-                dataKey="quantity"
-                fill="var(--chart-1)"
-                radius={[0, 8, 8, 0]}
-                barSize={18}
-              />
-              <Bar
-                dataKey="reorder"
-                fill="var(--chart-2)"
-                radius={[0, 8, 8, 0]}
-                barSize={7}
-              />
-            </BarChart>
-          </ResponsiveContainer>
+      <CardContent className="space-y-5">
+        <div className="rounded-2xl border bg-muted/25 p-5">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-xs text-muted-foreground">
+                Total feed available
+              </p>
+              <p className="mt-2 font-mono text-3xl font-semibold">
+                {formatNumber(totalFeedKg, 1)}
+                <span className="ml-2 text-sm font-normal text-muted-foreground">
+                  kg
+                </span>
+              </p>
+            </div>
+            <div className="grid size-12 place-items-center rounded-2xl bg-primary/10 text-primary">
+              <Scale className="size-5" />
+            </div>
+          </div>
         </div>
-        <div className="mt-3 flex items-center gap-5 text-[11px] text-muted-foreground">
-          <span className="flex items-center gap-1.5">
-            <span className="size-2 rounded-full bg-chart-1" />
-            Current stock
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="size-2 rounded-full bg-chart-2" />
-            Reorder level
-          </span>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-2xl border bg-card/55 p-4">
+            <p className="text-xs text-muted-foreground">
+              Reorder flags
+            </p>
+            <p className="mt-2 font-mono text-2xl font-semibold">
+              {lowStockItems}
+            </p>
+          </div>
+          <div className="rounded-2xl border bg-card/55 p-4">
+            <p className="text-xs text-muted-foreground">
+              Inventory status
+            </p>
+            <p
+              className={
+                lowStockItems > 0
+                  ? "mt-2 text-sm font-semibold text-warning"
+                  : "mt-2 text-sm font-semibold text-primary"
+              }
+            >
+              {lowStockItems > 0
+                ? "Review required"
+                : "Within limits"}
+            </p>
+          </div>
         </div>
       </CardContent>
     </Card>

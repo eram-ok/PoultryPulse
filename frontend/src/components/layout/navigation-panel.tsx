@@ -2,19 +2,22 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { ChevronsUpDown, CloudSun, LifeBuoy } from "lucide-react"
+import {
+  ChevronsUpDown,
+  CloudSun,
+  LifeBuoy,
+} from "lucide-react"
 
+import { useAuth } from "@/components/auth/auth-provider"
 import { PoultryPulseLogo } from "@/components/brand/poultry-pulse-logo"
 import { Button } from "@/components/ui/button"
-import {
-  ScrollArea,
-} from "@/components/ui/scroll-area"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { navigationGroups } from "@/lib/navigation"
+import { allowedNavigationGroups } from "@/lib/navigation"
 import { cn } from "@/lib/utils"
 
 interface NavigationPanelProps {
@@ -25,6 +28,16 @@ export function NavigationPanel({
   onNavigate,
 }: NavigationPanelProps) {
   const pathname = usePathname()
+  const { session } = useAuth()
+  const groups = allowedNavigationGroups(
+    session.permissions,
+  )
+  const farmDetail = [
+    session.farm.district,
+    session.farm.farm_code,
+  ]
+    .filter(Boolean)
+    .join(" · ")
 
   return (
     <div className="flex h-full flex-col">
@@ -42,10 +55,10 @@ export function NavigationPanel({
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold">
-              PoultryPulse Farm
+              {session.farm.name}
             </p>
             <p className="truncate text-xs text-muted-foreground">
-              Mukono · PP-FARM-001
+              {farmDetail || session.farm.timezone}
             </p>
           </div>
           <ChevronsUpDown className="size-4 text-muted-foreground transition group-hover:text-foreground" />
@@ -54,7 +67,7 @@ export function NavigationPanel({
 
       <ScrollArea className="min-h-0 flex-1 px-3">
         <nav className="space-y-5 pb-6">
-          {navigationGroups.map((group) => (
+          {groups.map((group) => (
             <div key={group.label}>
               <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground/75">
                 {group.label}
@@ -63,7 +76,9 @@ export function NavigationPanel({
                 {group.items.map((item) => {
                   const active =
                     pathname === item.href ||
-                    pathname.startsWith(`${item.href}/`)
+                    pathname.startsWith(
+                      `${item.href}/`,
+                    )
                   const Icon = item.icon
 
                   return (
@@ -114,7 +129,8 @@ export function NavigationPanel({
             Need help?
           </div>
           <p className="text-xs leading-5 text-muted-foreground">
-            Open the workshop guide or contact your farm administrator.
+            Contact your farm administrator for account or
+            workflow support.
           </p>
           <Button
             variant="ghost"

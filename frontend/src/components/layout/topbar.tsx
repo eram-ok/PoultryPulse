@@ -1,15 +1,22 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react"
+import Link from "next/link"
 import {
   Bell,
   ChevronDown,
+  KeyRound,
   LogOut,
   Search,
   Settings,
   UserRound,
 } from "lucide-react"
 
+import { useAuth } from "@/components/auth/auth-provider"
 import { CommandMenu } from "@/components/layout/command-menu"
 import { MobileNavigation } from "@/components/layout/mobile-navigation"
 import { ThemeToggle } from "@/components/layout/theme-toggle"
@@ -25,9 +32,24 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Separator } from "@/components/ui/separator"
+import { browserApiRequest } from "@/lib/api/browser"
+import type { AlertCountsResponse } from "@/lib/api/types"
 
 export function Topbar() {
   const [commandOpen, setCommandOpen] = useState(false)
+  const [alertCount, setAlertCount] = useState(0)
+  const { session, logout } = useAuth()
+  const canViewAlerts =
+    session.permissions.includes("alerts.view")
+  const primaryRole =
+    session.roles[0] ?? "Farm user"
+  const initials = useMemo(
+    () =>
+      `${session.user.first_name.charAt(
+        0,
+      )}${session.user.last_name.charAt(0)}`.toUpperCase(),
+    [session.user.first_name, session.user.last_name],
+  )
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -45,6 +67,29 @@ export function Topbar() {
       window.removeEventListener("keydown", handleKeyDown)
   }, [])
 
+  useEffect(() => {
+    if (!canViewAlerts) {
+      return
+    }
+
+    const controller = new AbortController()
+
+    browserApiRequest<AlertCountsResponse>(
+      "/alerts/counts",
+      {
+        signal: controller.signal,
+      },
+    )
+      .then((counts) => {
+        setAlertCount(counts.unread)
+      })
+      .catch(() => {
+        setAlertCount(0)
+      })
+
+    return () => controller.abort()
+  }, [canViewAlerts])
+
   return (
     <>
       <header className="sticky top-0 z-30 border-b border-border/70 bg-background/88 backdrop-blur-xl supports-[backdrop-filter]:bg-background/72">
@@ -57,7 +102,9 @@ export function Topbar() {
             onClick={() => setCommandOpen(true)}
           >
             <Search className="size-4" />
-            <span className="truncate">Search PoultryPulse...</span>
+            <span className="truncate">
+              Search PoultryPulse...
+            </span>
             <kbd className="ml-auto rounded-md border bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
               Ctrl K
             </kbd>
@@ -76,17 +123,35 @@ export function Topbar() {
 
             <ThemeToggle />
 
-            <Button
-              variant="ghost"
-              size="icon"
-              className="relative rounded-xl"
-              aria-label="View alerts"
-            >
-              <Bell className="size-[18px]" />
-              <span className="absolute right-2 top-2 size-2 rounded-full bg-destructive ring-2 ring-background" />
-            </Button>
+            {canViewAlerts ? (
+              <Button
+                asChild
+                variant="ghost"
+                size="icon"
+                className="relative rounded-xl"
+              >
+                <Link
+                  href="/alerts"
+                  aria-label={`View alerts${
+                    alertCount
+                      ? `, ${alertCount} unread`
+                      : ""
+                  }`}
+                >
+                  <Bell className="size-[18px]" />
+                  {alertCount > 0 ? (
+                    <span className="absolute right-1.5 top-1.5 grid min-h-4 min-w-4 place-items-center rounded-full bg-destructive px-1 text-[9px] font-semibold text-white ring-2 ring-background">
+                      {alertCount > 99 ? "99+" : alertCount}
+                    </span>
+                  ) : null}
+                </Link>
+              </Button>
+            ) : null}
 
-            <Separator orientation="vertical" className="mx-2 h-7" />
+            <Separator
+              orientation="vertical"
+              className="mx-2 h-7"
+            />
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -96,43 +161,68 @@ export function Topbar() {
                 >
                   <Avatar className="size-8">
                     <AvatarFallback className="bg-primary/15 text-xs font-semibold text-primary">
-                      PA
+                      {initials}
                     </AvatarFallback>
                   </Avatar>
                   <div className="hidden min-w-0 text-left md:block">
                     <p className="max-w-36 truncate text-xs font-semibold">
-                      PoultryPulse Admin
+                      {session.user.full_name}
                     </p>
                     <div className="flex items-center gap-1">
                       <Badge
                         variant="secondary"
-                        className="h-4 rounded-full px-1.5 text-[9px]"
+                        className="h-4 max-w-32 truncate rounded-full px-1.5 text-[9px]"
                       >
-                        Administrator
+                        {primaryRole}
                       </Badge>
                     </div>
                   </div>
                   <ChevronDown className="hidden size-3.5 text-muted-foreground md:block" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuContent
+                align="end"
+                className="w-64"
+              >
                 <DropdownMenuLabel>
-                  <p className="text-sm">PoultryPulse Admin</p>
-                  <p className="text-xs font-normal text-muted-foreground">
-                    admin@poultrypulse.local
+                  <p className="truncate text-sm">
+                    {session.user.full_name}
+                  </p>
+                  <p className="truncate text-xs font-normal text-muted-foreground">
+                    {session.user.email ??
+                      `@${session.user.username}`}
                   </p>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <UserRound className="size-4" />
-                  Profile
+                <DropdownMenuItem asChild>
+                  <Link href="/profile">
+                    <UserRound className="size-4" />
+                    Profile
+                  </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Settings className="size-4" />
-                  Preferences
+                <DropdownMenuItem asChild>
+                  <Link href="/change-password">
+                    <KeyRound className="size-4" />
+                    Change password
+                  </Link>
                 </DropdownMenuItem>
+                {session.permissions.includes(
+                  "farms.view",
+                ) ? (
+                  <DropdownMenuItem asChild>
+                    <Link href="/settings">
+                      <Settings className="size-4" />
+                      Farm settings
+                    </Link>
+                  </DropdownMenuItem>
+                ) : null}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem variant="destructive">
+                <DropdownMenuItem
+                  variant="destructive"
+                  onSelect={() => {
+                    void logout()
+                  }}
+                >
                   <LogOut className="size-4" />
                   Sign out
                 </DropdownMenuItem>

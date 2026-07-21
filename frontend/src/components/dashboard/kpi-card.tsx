@@ -1,5 +1,9 @@
 import type { LucideIcon } from "lucide-react"
-import { ArrowDownRight, ArrowUpRight } from "lucide-react"
+import {
+  ArrowDownRight,
+  ArrowRight,
+  ArrowUpRight,
+} from "lucide-react"
 
 import {
   Card,
@@ -13,30 +17,27 @@ const toneStyles = {
   emerald: {
     icon: "bg-primary/12 text-primary",
     line: "bg-primary",
-    area: "bg-primary/8",
   },
   amber: {
     icon: "bg-warning/14 text-warning",
     line: "bg-warning",
-    area: "bg-warning/8",
   },
   blue: {
     icon: "bg-info/14 text-info",
     line: "bg-info",
-    area: "bg-info/8",
   },
   violet: {
     icon: "bg-chart-5/14 text-chart-5",
     line: "bg-chart-5",
-    area: "bg-chart-5/8",
   },
 } as const
 
 interface KpiCardProps {
   title: string
   value: string
-  change: string
-  changeLabel: string
+  indicator: string
+  indicatorLabel: string
+  indicatorTone: "positive" | "negative" | "neutral"
   icon: LucideIcon
   tone: keyof typeof toneStyles
   sparkline: number[]
@@ -45,15 +46,21 @@ interface KpiCardProps {
 export function KpiCard({
   title,
   value,
-  change,
-  changeLabel,
+  indicator,
+  indicatorLabel,
+  indicatorTone,
   icon: Icon,
   tone,
   sparkline,
 }: KpiCardProps) {
-  const positive = change.startsWith("+")
   const styles = toneStyles[tone]
-  const max = Math.max(...sparkline)
+  const max = Math.max(...sparkline, 1)
+  const TrendIcon =
+    indicatorTone === "positive"
+      ? ArrowUpRight
+      : indicatorTone === "negative"
+        ? ArrowDownRight
+        : ArrowRight
 
   return (
     <Card className="metric-glow overflow-hidden rounded-2xl border-border/70 bg-card/82 py-0 backdrop-blur">
@@ -84,7 +91,10 @@ export function KpiCard({
                 styles.line,
               )}
               style={{
-                height: `${Math.max(18, (point / max) * 100)}%`,
+                height: `${Math.max(
+                  12,
+                  (Math.max(point, 0) / max) * 100,
+                )}%`,
               }}
             />
           ))}
@@ -94,18 +104,19 @@ export function KpiCard({
           <span
             className={cn(
               "inline-flex items-center font-semibold",
-              positive ? "text-primary" : "text-destructive",
+              indicatorTone === "positive" &&
+                "text-primary",
+              indicatorTone === "negative" &&
+                "text-destructive",
+              indicatorTone === "neutral" &&
+                "text-muted-foreground",
             )}
           >
-            {positive ? (
-              <ArrowUpRight className="size-3.5" />
-            ) : (
-              <ArrowDownRight className="size-3.5" />
-            )}
-            {change}
+            <TrendIcon className="size-3.5" />
+            {indicator}
           </span>
           <span className="truncate text-muted-foreground">
-            {changeLabel}
+            {indicatorLabel}
           </span>
         </div>
       </CardContent>

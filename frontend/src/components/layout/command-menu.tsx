@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation"
 import { Search } from "lucide-react"
 
+import { useAuth } from "@/components/auth/auth-provider"
 import {
   CommandDialog,
   CommandEmpty,
@@ -13,7 +14,10 @@ import {
   CommandSeparator,
   CommandShortcut,
 } from "@/components/ui/command"
-import { navigationGroups, quickActions } from "@/lib/navigation"
+import {
+  allowedNavigationGroups,
+  allowedQuickActions,
+} from "@/lib/navigation"
 
 interface CommandMenuProps {
   open: boolean
@@ -25,6 +29,13 @@ export function CommandMenu({
   onOpenChange,
 }: CommandMenuProps) {
   const router = useRouter()
+  const { session } = useAuth()
+  const groups = allowedNavigationGroups(
+    session.permissions,
+  )
+  const actions = allowedQuickActions(
+    session.permissions,
+  )
 
   function navigate(href: string) {
     onOpenChange(false)
@@ -32,34 +43,46 @@ export function CommandMenu({
   }
 
   return (
-    <CommandDialog open={open} onOpenChange={onOpenChange}>
-      <CommandInput placeholder="Search modules and quick actions..." />
+    <CommandDialog
+      open={open}
+      onOpenChange={onOpenChange}
+    >
+      <CommandInput placeholder="Search available modules and actions..." />
       <CommandList>
-        <CommandEmpty>No PoultryPulse module found.</CommandEmpty>
+        <CommandEmpty>
+          No permitted PoultryPulse module found.
+        </CommandEmpty>
 
-        <CommandGroup heading="Quick actions">
-          {quickActions.map((item, index) => {
-            const Icon = item.icon
-            return (
-              <CommandItem
-                key={item.href}
-                value={`${item.label} ${item.description}`}
-                onSelect={() => navigate(item.href)}
-              >
-                <Icon className="size-4" />
-                <span>{item.label}</span>
-                <CommandShortcut>
-                  ⌘{index + 1}
-                </CommandShortcut>
-              </CommandItem>
-            )
-          })}
-        </CommandGroup>
+        {actions.length > 0 ? (
+          <CommandGroup heading="Quick actions">
+            {actions.map((item, index) => {
+              const Icon = item.icon
+              return (
+                <CommandItem
+                  key={item.href}
+                  value={`${item.label} ${item.description}`}
+                  onSelect={() => navigate(item.href)}
+                >
+                  <Icon className="size-4" />
+                  <span>{item.label}</span>
+                  <CommandShortcut>
+                    ⌘{index + 1}
+                  </CommandShortcut>
+                </CommandItem>
+              )
+            })}
+          </CommandGroup>
+        ) : null}
 
-        <CommandSeparator />
+        {actions.length > 0 ? (
+          <CommandSeparator />
+        ) : null}
 
-        {navigationGroups.map((group) => (
-          <CommandGroup heading={group.label} key={group.label}>
+        {groups.map((group) => (
+          <CommandGroup
+            heading={group.label}
+            key={group.label}
+          >
             {group.items.map((item) => {
               const Icon = item.icon
               return (
@@ -83,7 +106,7 @@ export function CommandMenu({
       </CommandList>
       <div className="flex items-center gap-2 border-t px-3 py-2 text-[11px] text-muted-foreground">
         <Search className="size-3.5" />
-        Search across the PoultryPulse workspace
+        Search the modules available to your account
       </div>
     </CommandDialog>
   )
