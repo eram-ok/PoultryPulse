@@ -9,6 +9,8 @@ from starlette.middleware.base import (
 from starlette.requests import Request
 from starlette.responses import Response
 
+from app.core.config import get_settings
+from app.core.network import resolve_client_ip
 from app.modules.audit.context import (
     AuditRequestContext,
     reset_audit_context,
@@ -16,19 +18,14 @@ from app.modules.audit.context import (
 )
 
 
+settings = get_settings()
+
+
 def client_ip(request: Request) -> str | None:
-    forwarded_for = request.headers.get("x-forwarded-for")
-    if forwarded_for:
-        return forwarded_for.split(",", 1)[0].strip()
-
-    real_ip = request.headers.get("x-real-ip")
-    if real_ip:
-        return real_ip.strip()
-
-    if request.client is None:
-        return None
-
-    return request.client.host
+    return resolve_client_ip(
+        request,
+        trusted_proxy_entries=(settings.trusted_proxy_list),
+    )
 
 
 class AuditRequestContextMiddleware(BaseHTTPMiddleware):

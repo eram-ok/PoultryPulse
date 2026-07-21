@@ -31,6 +31,26 @@ def verify_password(
     )
 
 
+def _base_token_claims(
+    *,
+    subject: str,
+    token_type: str,
+    expires_at: datetime,
+) -> dict[str, Any]:
+    issued_at = datetime.now(UTC)
+
+    return {
+        "sub": subject,
+        "type": token_type,
+        "iat": issued_at,
+        "nbf": issued_at,
+        "exp": expires_at,
+        "jti": str(uuid4()),
+        "iss": settings.jwt_issuer,
+        "aud": settings.jwt_audience,
+    }
+
+
 def create_access_token(
     subject: str,
     *,
@@ -40,14 +60,11 @@ def create_access_token(
 
     issued_at = datetime.now(UTC)
     expires_at = issued_at + timedelta(minutes=settings.access_token_expire_minutes)
-
-    claims: dict[str, Any] = {
-        "sub": subject,
-        "type": "access",
-        "iat": issued_at,
-        "exp": expires_at,
-        "jti": str(uuid4()),
-    }
+    claims = _base_token_claims(
+        subject=subject,
+        token_type="access",
+        expires_at=expires_at,
+    )
 
     if additional_claims:
         claims.update(additional_claims)
@@ -68,14 +85,11 @@ def create_refresh_token(
 
     issued_at = datetime.now(UTC)
     expires_at = issued_at + timedelta(days=settings.refresh_token_expire_days)
-
-    claims: dict[str, Any] = {
-        "sub": subject,
-        "type": "refresh",
-        "iat": issued_at,
-        "exp": expires_at,
-        "jti": str(uuid4()),
-    }
+    claims = _base_token_claims(
+        subject=subject,
+        token_type="refresh",
+        expires_at=expires_at,
+    )
 
     if additional_claims:
         claims.update(additional_claims)
@@ -90,20 +104,38 @@ def create_refresh_token(
 def decode_token(token: str) -> dict[str, Any]:
     """Decode and validate a signed PoultryPulse token."""
 
+    required_claims = [
+        "sub",
+        "type",
+        "iat",
+        "exp",
+        "jti",
+    ]
+    options: dict[str, Any] = {
+        "require": required_claims,
+        "verify_aud": (settings.jwt_validate_issuer_audience),
+        "verify_iss": (settings.jwt_validate_issuer_audience),
+    }
+    decode_kwargs: dict[str, Any] = {
+        "algorithms": [settings.jwt_algorithm],
+        "options": options,
+        "leeway": settings.jwt_leeway_seconds,
+    }
+
+    if settings.jwt_validate_issuer_audience:
+        required_claims.extend(["iss", "aud"])
+        decode_kwargs.update(
+            {
+                "issuer": settings.jwt_issuer,
+                "audience": settings.jwt_audience,
+            }
+        )
+
     try:
         return jwt.decode(
             token,
             settings.jwt_secret_key,
-            algorithms=[settings.jwt_algorithm],
-            options={
-                "require": [
-                    "sub",
-                    "type",
-                    "iat",
-                    "exp",
-                    "jti",
-                ]
-            },
+            **decode_kwargs,
         )
     except InvalidTokenError as exc:
         raise ValueError("The authentication token is invalid or expired.") from exc

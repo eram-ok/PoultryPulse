@@ -10,7 +10,9 @@ from fastapi import (
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
+from app.core.config import get_settings
 from app.core.database import get_database_session
+from app.core.network import resolve_client_ip
 from app.modules.audit.constants import (
     AuditAction,
     AuditOutcome,
@@ -33,6 +35,9 @@ from app.modules.auth.service import AuthService
 from app.modules.users.schemas import UserResponse
 
 
+settings = get_settings()
+
+
 router = APIRouter(
     prefix="/auth",
     tags=["Authentication"],
@@ -45,18 +50,10 @@ DatabaseSession = Annotated[
 
 
 def get_client_ip(request: Request) -> str | None:
-    forwarded_for = request.headers.get("x-forwarded-for")
-    if forwarded_for:
-        return forwarded_for.split(",", 1)[0].strip()
-
-    real_ip = request.headers.get("x-real-ip")
-    if real_ip:
-        return real_ip.strip()
-
-    if request.client is None:
-        return None
-
-    return request.client.host
+    return resolve_client_ip(
+        request,
+        trusted_proxy_entries=settings.trusted_proxy_list,
+    )
 
 
 @router.post(

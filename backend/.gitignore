@@ -1,0 +1,27 @@
+# PoultryPulse secrets and local environments
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Local tooling and generated installers/reports
+*.stage*.bak
+install_stage*.py
+inspect_stage*.py
+stage*_report.txt
+
+# IDE and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
