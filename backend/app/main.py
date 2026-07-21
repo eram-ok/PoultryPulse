@@ -9,6 +9,10 @@ from app.core.config import get_settings
 from app.core.exception_handlers import application_error_handler
 from app.core.exceptions import ApplicationError
 
+from app.modules.audit.commercial_registry import (
+    install_commercial_auditing,
+)
+
 
 settings = get_settings()
 
@@ -53,3 +57,6 @@ app.include_router(
 # Stage 17C1: install farm-operation audit wrappers after
 # all API routers and service modules have been imported.
 install_operational_auditing()
+
+# Stage 17C2: install sales, finance, alert and notification audit wrappers.
+install_commercial_auditing()
