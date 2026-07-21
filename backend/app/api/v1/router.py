@@ -30,6 +30,8 @@ from app.modules.sales.router import router as sales_router
 
 from app.modules.finance.router import router as finance_router
 
+from app.modules.reports.router import router as reports_router
+
 settings = get_settings()
 
 router = APIRouter()
@@ -66,3 +68,4 @@ router.include_router(bird_losses_router)
 router.include_router(health_router)
 router.include_router(sales_router)
 router.include_router(finance_router)
+router.include_router(reports_router)

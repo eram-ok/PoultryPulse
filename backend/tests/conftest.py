@@ -252,6 +252,21 @@ REQUIRED_TEST_PERMISSIONS = [
         "finance",
         "View Finance Reports",
     ),
+    (
+        "dashboard.view",
+        "reports",
+        "View Dashboard",
+    ),
+    (
+        "reports.view",
+        "reports",
+        "View Analytics Reports",
+    ),
+    (
+        "alerts.view",
+        "alerts",
+        "View Operational Alerts",
+    ),
 ]
 
 
