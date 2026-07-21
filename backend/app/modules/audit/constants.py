@@ -1,0 +1,42 @@
+from enum import StrEnum
+
+
+class AuditAction(StrEnum):
+    CREATE = "CREATE"
+    VIEW = "VIEW"
+    UPDATE = "UPDATE"
+    DELETE = "DELETE"
+    ACTIVATE = "ACTIVATE"
+    DEACTIVATE = "DEACTIVATE"
+    ASSIGN = "ASSIGN"
+    REMOVE = "REMOVE"
+    SUBMIT = "SUBMIT"
+    CONFIRM = "CONFIRM"
+    REJECT = "REJECT"
+    CANCEL = "CANCEL"
+    COMPLETE = "COMPLETE"
+    RESOLVE = "RESOLVE"
+    REOPEN = "REOPEN"
+    REVERSE = "REVERSE"
+    VOID = "VOID"
+    LOGIN = "LOGIN"
+    LOGIN_FAILED = "LOGIN_FAILED"
+    LOGOUT = "LOGOUT"
+    TOKEN_REFRESH = "TOKEN_REFRESH"
+    PASSWORD_CHANGE = "PASSWORD_CHANGE"
+    EXPORT = "EXPORT"
+    PROCESS = "PROCESS"
+    SYNC = "SYNC"
+    SYSTEM = "SYSTEM"
+
+
+class AuditOutcome(StrEnum):
+    SUCCESS = "SUCCESS"
+    FAILURE = "FAILURE"
+    DENIED = "DENIED"
+
+
+class AuditSeverity(StrEnum):
+    INFO = "INFO"
+    WARNING = "WARNING"
+    CRITICAL = "CRITICAL"

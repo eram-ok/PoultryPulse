@@ -1,3 +1,4 @@
+from app.modules.audit.context import bind_audit_actor
 from collections.abc import Callable
 from typing import Annotated
 from uuid import UUID
@@ -72,6 +73,11 @@ def get_current_user(
             error_code="token_farm_mismatch",
         )
 
+    bind_audit_actor(
+        user_id=user.id,
+        farm_id=user.farm_id,
+        username=user.username,
+    )
     return user
 
 

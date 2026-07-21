@@ -1,3 +1,4 @@
+from app.modules.audit.middleware import AuditRequestContextMiddleware
 from fastapi import FastAPI
 
 from app.api.v1.router import router as api_v1_router
@@ -17,6 +18,8 @@ app = FastAPI(
     ),
     debug=settings.app_debug,
 )
+
+app.add_middleware(AuditRequestContextMiddleware)
 
 app.add_exception_handler(
     ApplicationError,

@@ -307,6 +307,21 @@ REQUIRED_TEST_PERMISSIONS = [
         "alerts",
         "View Notification Delivery History",
     ),
+    (
+        "audit.view",
+        "audit",
+        "View Audit Trail",
+    ),
+    (
+        "audit.export",
+        "audit",
+        "Export Audit Trail",
+    ),
+    (
+        "audit.manage",
+        "audit",
+        "Manage Audit Settings",
+    ),
 ]
 
 

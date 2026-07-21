@@ -36,6 +36,8 @@ from app.modules.reports.advanced_router import router as advanced_reports_route
 
 from app.modules.alerts.router import router as alerts_router
 
+from app.modules.audit.router import router as audit_router
+
 settings = get_settings()
 
 router = APIRouter()
@@ -75,3 +77,4 @@ router.include_router(finance_router)
 router.include_router(reports_router)
 router.include_router(advanced_reports_router)
 router.include_router(alerts_router)
+router.include_router(audit_router)
