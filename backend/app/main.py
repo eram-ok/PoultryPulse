@@ -1,3 +1,9 @@
+from __future__ import annotations
+
+import logging
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.trustedhost import (
@@ -6,10 +12,16 @@ from starlette.middleware.trustedhost import (
 
 from app.api.v1.router import router as api_v1_router
 from app.core.config import get_settings
+from app.core.database import dispose_database_engine
 from app.core.exception_handlers import (
     application_error_handler,
 )
 from app.core.exceptions import ApplicationError
+from app.core.health import check_database_readiness
+from app.core.logging import configure_logging
+from app.core.operational_middleware import (
+    OperationalRequestLoggingMiddleware,
+)
 from app.core.security_middleware import (
     SecurityHardeningMiddleware,
 )
@@ -28,6 +40,73 @@ from app.modules.audit.operational_registry import (
 
 
 settings = get_settings()
+configure_logging(
+    level=settings.log_level,
+    log_format=settings.log_format,
+    include_uvicorn_access_logs=(settings.uvicorn_access_log_enabled),
+)
+logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(
+    _app: FastAPI,
+) -> AsyncIterator[None]:
+    """Log lifecycle events and release pooled resources."""
+
+    logger.info(
+        "PoultryPulse application starting.",
+        extra={
+            "application": settings.app_name,
+            "version": settings.app_version,
+            "environment": settings.app_environment,
+            "event": "application_starting",
+        },
+    )
+
+    try:
+        if settings.startup_database_check_enabled:
+            database = await check_database_readiness(
+                timeout_seconds=(settings.readiness_database_timeout_seconds),
+            )
+            database_up = database["status"] == "up"
+            logger.log(
+                (logging.INFO if database_up else logging.ERROR),
+                "Startup database check completed.",
+                extra={
+                    "database_status": database["status"],
+                    "duration_ms": database.get(
+                        "latency_ms",
+                    ),
+                    "event": ("startup_database_check_completed"),
+                },
+            )
+
+            if not database_up and settings.startup_database_check_required:
+                raise RuntimeError("The required startup database check did not pass.")
+
+        logger.info(
+            "PoultryPulse application started.",
+            extra={
+                "application": settings.app_name,
+                "version": settings.app_version,
+                "environment": settings.app_environment,
+                "event": "application_started",
+            },
+        )
+        yield
+    finally:
+        logger.info(
+            "PoultryPulse application stopping.",
+            extra={
+                "application": settings.app_name,
+                "version": settings.app_version,
+                "environment": settings.app_environment,
+                "event": "application_stopping",
+            },
+        )
+        dispose_database_engine()
+
 
 app = FastAPI(
     title=settings.app_name,
@@ -40,6 +119,7 @@ app = FastAPI(
     docs_url=("/docs" if settings.docs_enabled else None),
     redoc_url=("/redoc" if settings.docs_enabled else None),
     openapi_url=("/openapi.json" if settings.docs_enabled else None),
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -81,6 +161,19 @@ app.add_middleware(
     api_v1_prefix=settings.api_v1_prefix,
 )
 
+health_paths = (
+    f"{settings.api_v1_prefix}/health",
+    f"{settings.api_v1_prefix}/health/live",
+    f"{settings.api_v1_prefix}/health/ready",
+)
+app.add_middleware(
+    OperationalRequestLoggingMiddleware,
+    enabled=settings.request_logging_enabled,
+    trusted_proxy_entries=(settings.trusted_proxy_list),
+    excluded_paths=(settings.request_logging_excluded_path_list),
+    health_paths=health_paths,
+)
+
 app.add_middleware(AuditRequestContextMiddleware)
 
 app.add_exception_handler(
@@ -102,7 +195,7 @@ def root() -> dict[str, str | None]:
     """Return basic information about the API."""
 
     return {
-        "message": "Welcome to the PoultryPulse API",
+        "message": ("Welcome to the PoultryPulse API"),
         "tagline": ("Know Your Flock. Grow Your Farm."),
         "documentation": ("/docs" if settings.docs_enabled else None),
     }

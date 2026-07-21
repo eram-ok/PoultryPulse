@@ -20,6 +20,19 @@ ALLOWED_JWT_ALGORITHMS = {
     "HS512",
 }
 
+ALLOWED_LOG_LEVELS = {
+    "CRITICAL",
+    "ERROR",
+    "WARNING",
+    "INFO",
+    "DEBUG",
+}
+
+ALLOWED_LOG_FORMATS = {
+    "json",
+    "text",
+}
+
 INSECURE_SECRET_VALUES = {
     "change-me",
     "changeme",
@@ -51,6 +64,44 @@ class Settings(BaseSettings):
     database_user: str
     database_password: str
     database_url: str
+    database_pool_size: int = Field(
+        default=5,
+        ge=1,
+        le=50,
+    )
+    database_max_overflow: int = Field(
+        default=10,
+        ge=0,
+        le=100,
+    )
+    database_pool_timeout_seconds: int = Field(
+        default=30,
+        ge=1,
+        le=120,
+    )
+    database_pool_recycle_seconds: int = Field(
+        default=1800,
+        ge=60,
+        le=86400,
+    )
+    database_connect_timeout_seconds: int = Field(
+        default=10,
+        ge=1,
+        le=60,
+    )
+    readiness_database_timeout_seconds: int = Field(
+        default=3,
+        ge=1,
+        le=30,
+    )
+    startup_database_check_enabled: bool = False
+    startup_database_check_required: bool = False
+
+    log_level: str = "INFO"
+    log_format: str = "text"
+    request_logging_enabled: bool = True
+    request_logging_excluded_paths: str = "/api/v1/health/live,/api/v1/health/ready"
+    uvicorn_access_log_enabled: bool = False
 
     jwt_secret_key: str
     jwt_algorithm: str = "HS256"
@@ -122,7 +173,9 @@ class Settings(BaseSettings):
     )
 
     @staticmethod
-    def _csv_values(value: str) -> tuple[str, ...]:
+    def _csv_values(
+        value: str,
+    ) -> tuple[str, ...]:
         return tuple(item.strip() for item in value.split(",") if item.strip())
 
     @property
@@ -131,15 +184,35 @@ class Settings(BaseSettings):
 
     @property
     def allowed_host_list(self) -> list[str]:
-        return list(self._csv_values(self.allowed_hosts))
+        return list(
+            self._csv_values(
+                self.allowed_hosts,
+            )
+        )
 
     @property
     def cors_origin_list(self) -> list[str]:
-        return list(self._csv_values(self.cors_allowed_origins))
+        return list(
+            self._csv_values(
+                self.cors_allowed_origins,
+            )
+        )
 
     @property
-    def trusted_proxy_list(self) -> tuple[str, ...]:
-        return self._csv_values(self.trusted_proxy_ips)
+    def trusted_proxy_list(
+        self,
+    ) -> tuple[str, ...]:
+        return self._csv_values(
+            self.trusted_proxy_ips,
+        )
+
+    @property
+    def request_logging_excluded_path_list(
+        self,
+    ) -> tuple[str, ...]:
+        return self._csv_values(
+            self.request_logging_excluded_paths,
+        )
 
     @model_validator(mode="after")
     def validate_security_configuration(
@@ -147,15 +220,35 @@ class Settings(BaseSettings):
     ) -> "Settings":
         self.app_environment = self.app_environment.strip().lower()
         self.api_v1_prefix = "/" + self.api_v1_prefix.strip("/")
+        self.log_level = self.log_level.strip().upper()
+        self.log_format = self.log_format.strip().lower()
 
         if self.jwt_algorithm not in ALLOWED_JWT_ALGORITHMS:
             raise ValueError("JWT_ALGORITHM must be HS256, HS384 or HS512.")
+
+        if self.log_level not in ALLOWED_LOG_LEVELS:
+            raise ValueError(
+                "LOG_LEVEL must be CRITICAL, ERROR, WARNING, INFO or DEBUG."
+            )
+
+        if self.log_format not in ALLOWED_LOG_FORMATS:
+            raise ValueError("LOG_FORMAT must be 'json' or 'text'.")
 
         if not self.jwt_issuer.strip():
             raise ValueError("JWT_ISSUER cannot be empty.")
 
         if not self.jwt_audience.strip():
             raise ValueError("JWT_AUDIENCE cannot be empty.")
+
+        if (
+            self.startup_database_check_required
+            and not self.startup_database_check_enabled
+        ):
+            raise ValueError(
+                "STARTUP_DATABASE_CHECK_ENABLED must "
+                "be true when the startup database "
+                "check is required."
+            )
 
         allowed_hosts = self.allowed_host_list
         cors_origins = self.cors_origin_list
