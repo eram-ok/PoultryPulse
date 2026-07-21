@@ -6,6 +6,13 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_database_session
 from app.core.exceptions import ResourceNotFoundError
+from app.modules.audit.constants import AuditAction
+from app.modules.audit.integration import (
+    farm_settings_snapshot,
+    farm_snapshot,
+    record_audit_safely,
+    record_failure_safely,
+)
 from app.modules.auth.dependencies import require_permissions
 from app.modules.farms.schemas import (
     FarmCreate,
@@ -57,7 +64,43 @@ def create_farm(
         Depends(require_permissions("farms.create")),
     ],
 ) -> FarmResponse:
-    farm = FarmService(database_session).create_farm(payload)
+    service = FarmService(database_session)
+
+    try:
+        farm = service.create_farm(payload)
+    except Exception as error:
+        record_failure_safely(
+            database_session,
+            module="farms",
+            action=AuditAction.CREATE,
+            description="A farm-registration attempt failed.",
+            error=error,
+            farm_id=current_user.farm_id,
+            actor_user_id=current_user.id,
+            actor_username=current_user.username,
+            resource_type="Farm",
+            metadata={
+                "requested_farm_code": payload.farm_code,
+                "requested_name": payload.name,
+            },
+        )
+        raise
+
+    record_audit_safely(
+        database_session,
+        module="farms",
+        action=AuditAction.CREATE,
+        description="Registered a poultry farm.",
+        farm_id=current_user.farm_id,
+        actor_user_id=current_user.id,
+        actor_username=current_user.username,
+        resource_type="Farm",
+        resource_id=farm.id,
+        after_values=farm_snapshot(farm),
+        metadata={
+            "target_farm_id": farm.id,
+        },
+    )
     return FarmResponse.model_validate(farm)
 
 
@@ -124,12 +167,45 @@ def update_farm(
     ],
 ) -> FarmResponse:
     verify_farm_access(current_user, farm_id)
+    service = FarmService(database_session)
+    before_values = farm_snapshot(service.get_farm(farm_id))
 
-    farm = FarmService(database_session).update_farm(
-        farm_id,
-        payload,
+    try:
+        farm = service.update_farm(
+            farm_id,
+            payload,
+        )
+    except Exception as error:
+        record_failure_safely(
+            database_session,
+            module="farms",
+            action=AuditAction.UPDATE,
+            description="A farm-profile update failed.",
+            error=error,
+            farm_id=current_user.farm_id,
+            actor_user_id=current_user.id,
+            actor_username=current_user.username,
+            resource_type="Farm",
+            resource_id=farm_id,
+            metadata={
+                "requested_fields": sorted(payload.model_dump(exclude_unset=True)),
+            },
+        )
+        raise
+
+    record_audit_safely(
+        database_session,
+        module="farms",
+        action=AuditAction.UPDATE,
+        description="Updated the farm profile.",
+        farm_id=current_user.farm_id,
+        actor_user_id=current_user.id,
+        actor_username=current_user.username,
+        resource_type="Farm",
+        resource_id=farm.id,
+        before_values=before_values,
+        after_values=farm_snapshot(farm),
     )
-
     return FarmResponse.model_validate(farm)
 
 
@@ -168,10 +244,43 @@ def update_farm_settings(
     ],
 ) -> FarmSettingsResponse:
     verify_farm_access(current_user, farm_id)
+    service = FarmService(database_session)
+    before_values = farm_settings_snapshot(service.get_settings(farm_id))
 
-    settings = FarmService(database_session).update_settings(
-        farm_id,
-        payload,
+    try:
+        settings = service.update_settings(
+            farm_id,
+            payload,
+        )
+    except Exception as error:
+        record_failure_safely(
+            database_session,
+            module="farms",
+            action=AuditAction.UPDATE,
+            description="A farm-settings update failed.",
+            error=error,
+            farm_id=current_user.farm_id,
+            actor_user_id=current_user.id,
+            actor_username=current_user.username,
+            resource_type="FarmSettings",
+            resource_id=farm_id,
+            metadata={
+                "requested_fields": sorted(payload.model_dump(exclude_unset=True)),
+            },
+        )
+        raise
+
+    record_audit_safely(
+        database_session,
+        module="farms",
+        action=AuditAction.UPDATE,
+        description="Updated farm settings.",
+        farm_id=current_user.farm_id,
+        actor_user_id=current_user.id,
+        actor_username=current_user.username,
+        resource_type="FarmSettings",
+        resource_id=settings.id,
+        before_values=before_values,
+        after_values=farm_settings_snapshot(settings),
     )
-
     return FarmSettingsResponse.model_validate(settings)

@@ -9,6 +9,13 @@ from fastapi import (
 from sqlalchemy.orm import Session
 
 from app.core.database import get_database_session
+from app.modules.audit.constants import AuditAction
+from app.modules.audit.integration import (
+    record_audit_safely,
+    record_failure_safely,
+    role_snapshot,
+    user_snapshot,
+)
 from app.modules.auth.dependencies import require_permissions
 from app.modules.users.models import User
 from app.modules.users.schemas import (
@@ -79,11 +86,43 @@ def create_user(
         Depends(require_permissions("users.create")),
     ],
 ) -> UserResponse:
-    user = UserService(database_session).create_user(
-        current_user.farm_id,
-        payload,
-    )
+    service = UserService(database_session)
 
+    try:
+        user = service.create_user(
+            current_user.farm_id,
+            payload,
+        )
+    except Exception as error:
+        record_failure_safely(
+            database_session,
+            module="users",
+            action=AuditAction.CREATE,
+            description="A farm-user creation attempt failed.",
+            error=error,
+            farm_id=current_user.farm_id,
+            actor_user_id=current_user.id,
+            actor_username=current_user.username,
+            resource_type="User",
+            metadata={
+                "requested_username": payload.username,
+                "requested_role_ids": payload.role_ids,
+            },
+        )
+        raise
+
+    record_audit_safely(
+        database_session,
+        module="users",
+        action=AuditAction.CREATE,
+        description="Created a farm user.",
+        farm_id=current_user.farm_id,
+        actor_user_id=current_user.id,
+        actor_username=current_user.username,
+        resource_type="User",
+        resource_id=user.id,
+        after_values=user_snapshot(user),
+    )
     return UserResponse.model_validate(user)
 
 
@@ -122,12 +161,50 @@ def update_user(
         Depends(require_permissions("users.update")),
     ],
 ) -> UserResponse:
-    user = UserService(database_session).update_user(
+    service = UserService(database_session)
+    existing = service.get_user(
         current_user.farm_id,
         user_id,
-        payload,
     )
+    before_values = user_snapshot(existing)
 
+    try:
+        user = service.update_user(
+            current_user.farm_id,
+            user_id,
+            payload,
+        )
+    except Exception as error:
+        record_failure_safely(
+            database_session,
+            module="users",
+            action=AuditAction.UPDATE,
+            description="A farm-user update failed.",
+            error=error,
+            farm_id=current_user.farm_id,
+            actor_user_id=current_user.id,
+            actor_username=current_user.username,
+            resource_type="User",
+            resource_id=user_id,
+            metadata={
+                "requested_fields": sorted(payload.model_dump(exclude_unset=True)),
+            },
+        )
+        raise
+
+    record_audit_safely(
+        database_session,
+        module="users",
+        action=AuditAction.UPDATE,
+        description="Updated a farm user.",
+        farm_id=current_user.farm_id,
+        actor_user_id=current_user.id,
+        actor_username=current_user.username,
+        resource_type="User",
+        resource_id=user.id,
+        before_values=before_values,
+        after_values=user_snapshot(user),
+    )
     return UserResponse.model_validate(user)
 
 
@@ -144,11 +221,47 @@ def activate_user(
         Depends(require_permissions("users.update")),
     ],
 ) -> UserResponse:
-    user = UserService(database_session).activate_user(
-        current_user.farm_id,
-        user_id,
+    service = UserService(database_session)
+    before_values = user_snapshot(
+        service.get_user(
+            current_user.farm_id,
+            user_id,
+        )
     )
 
+    try:
+        user = service.activate_user(
+            current_user.farm_id,
+            user_id,
+        )
+    except Exception as error:
+        record_failure_safely(
+            database_session,
+            module="users",
+            action=AuditAction.ACTIVATE,
+            description="A farm-user activation failed.",
+            error=error,
+            farm_id=current_user.farm_id,
+            actor_user_id=current_user.id,
+            actor_username=current_user.username,
+            resource_type="User",
+            resource_id=user_id,
+        )
+        raise
+
+    record_audit_safely(
+        database_session,
+        module="users",
+        action=AuditAction.ACTIVATE,
+        description="Activated a farm user.",
+        farm_id=current_user.farm_id,
+        actor_user_id=current_user.id,
+        actor_username=current_user.username,
+        resource_type="User",
+        resource_id=user.id,
+        before_values=before_values,
+        after_values=user_snapshot(user),
+    )
     return UserResponse.model_validate(user)
 
 
@@ -165,12 +278,48 @@ def deactivate_user(
         Depends(require_permissions("users.deactivate")),
     ],
 ) -> UserResponse:
-    user = UserService(database_session).deactivate_user(
-        current_user.farm_id,
-        user_id,
-        acting_user_id=current_user.id,
+    service = UserService(database_session)
+    before_values = user_snapshot(
+        service.get_user(
+            current_user.farm_id,
+            user_id,
+        )
     )
 
+    try:
+        user = service.deactivate_user(
+            current_user.farm_id,
+            user_id,
+            acting_user_id=current_user.id,
+        )
+    except Exception as error:
+        record_failure_safely(
+            database_session,
+            module="users",
+            action=AuditAction.DEACTIVATE,
+            description="A farm-user deactivation failed.",
+            error=error,
+            farm_id=current_user.farm_id,
+            actor_user_id=current_user.id,
+            actor_username=current_user.username,
+            resource_type="User",
+            resource_id=user_id,
+        )
+        raise
+
+    record_audit_safely(
+        database_session,
+        module="users",
+        action=AuditAction.DEACTIVATE,
+        description="Deactivated a farm user.",
+        farm_id=current_user.farm_id,
+        actor_user_id=current_user.id,
+        actor_username=current_user.username,
+        resource_type="User",
+        resource_id=user.id,
+        before_values=before_values,
+        after_values=user_snapshot(user),
+    )
     return UserResponse.model_validate(user)
 
 
@@ -188,12 +337,59 @@ def assign_role(
         Depends(require_permissions("roles.assign")),
     ],
 ) -> UserResponse:
-    user = UserService(database_session).assign_role(
+    service = UserService(database_session)
+    existing = service.get_user(
         current_user.farm_id,
         user_id,
+    )
+    role = service.repository.get_role(
+        current_user.farm_id,
         role_id,
     )
+    before_values = user_snapshot(existing)
 
+    try:
+        user = service.assign_role(
+            current_user.farm_id,
+            user_id,
+            role_id,
+        )
+    except Exception as error:
+        record_failure_safely(
+            database_session,
+            module="roles",
+            action=AuditAction.ASSIGN,
+            description="A role assignment failed.",
+            error=error,
+            farm_id=current_user.farm_id,
+            actor_user_id=current_user.id,
+            actor_username=current_user.username,
+            resource_type="User",
+            resource_id=user_id,
+            metadata={
+                "role_id": role_id,
+                "role": (role_snapshot(role) if role is not None else None),
+            },
+        )
+        raise
+
+    record_audit_safely(
+        database_session,
+        module="roles",
+        action=AuditAction.ASSIGN,
+        description="Assigned a role to a farm user.",
+        farm_id=current_user.farm_id,
+        actor_user_id=current_user.id,
+        actor_username=current_user.username,
+        resource_type="User",
+        resource_id=user.id,
+        before_values=before_values,
+        after_values=user_snapshot(user),
+        metadata={
+            "role_id": role_id,
+            "role": (role_snapshot(role) if role is not None else None),
+        },
+    )
     return UserResponse.model_validate(user)
 
 
@@ -211,12 +407,59 @@ def remove_role(
         Depends(require_permissions("roles.assign")),
     ],
 ) -> UserResponse:
-    user = UserService(database_session).remove_role(
+    service = UserService(database_session)
+    existing = service.get_user(
         current_user.farm_id,
         user_id,
+    )
+    role = service.repository.get_role(
+        current_user.farm_id,
         role_id,
     )
+    before_values = user_snapshot(existing)
 
+    try:
+        user = service.remove_role(
+            current_user.farm_id,
+            user_id,
+            role_id,
+        )
+    except Exception as error:
+        record_failure_safely(
+            database_session,
+            module="roles",
+            action=AuditAction.REMOVE,
+            description="A role-removal operation failed.",
+            error=error,
+            farm_id=current_user.farm_id,
+            actor_user_id=current_user.id,
+            actor_username=current_user.username,
+            resource_type="User",
+            resource_id=user_id,
+            metadata={
+                "role_id": role_id,
+                "role": (role_snapshot(role) if role is not None else None),
+            },
+        )
+        raise
+
+    record_audit_safely(
+        database_session,
+        module="roles",
+        action=AuditAction.REMOVE,
+        description="Removed a role from a farm user.",
+        farm_id=current_user.farm_id,
+        actor_user_id=current_user.id,
+        actor_username=current_user.username,
+        resource_type="User",
+        resource_id=user.id,
+        before_values=before_values,
+        after_values=user_snapshot(user),
+        metadata={
+            "role_id": role_id,
+            "role": (role_snapshot(role) if role is not None else None),
+        },
+    )
     return UserResponse.model_validate(user)
 
 
