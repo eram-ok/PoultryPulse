@@ -52,6 +52,10 @@ def test_expected_tables_exist() -> None:
         "supplier_bills",
         "supplier_bill_payments",
         "cash_ledger_entries",
+        "operational_alerts",
+        "alert_user_states",
+        "notification_preferences",
+        "alert_refresh_runs",
     }
 
     assert expected_tables.issubset(table_names)
