@@ -207,6 +207,51 @@ REQUIRED_TEST_PERMISSIONS = [
         "sales",
         "Manage Sale Returns",
     ),
+    (
+        "finance.view",
+        "finance",
+        "View Finance",
+    ),
+    (
+        "expense_categories.manage",
+        "finance",
+        "Manage Expense Categories",
+    ),
+    (
+        "expenses.record",
+        "finance",
+        "Record Expenses",
+    ),
+    (
+        "expenses.void",
+        "finance",
+        "Void Expenses",
+    ),
+    (
+        "supplier_bills.manage",
+        "finance",
+        "Manage Supplier Bills",
+    ),
+    (
+        "supplier_payments.record",
+        "finance",
+        "Record Supplier Payments",
+    ),
+    (
+        "supplier_payments.reverse",
+        "finance",
+        "Reverse Supplier Payments",
+    ),
+    (
+        "cash_ledger.adjust",
+        "finance",
+        "Adjust Cash Ledger",
+    ),
+    (
+        "finance.reports",
+        "finance",
+        "View Finance Reports",
+    ),
 ]
 
 
