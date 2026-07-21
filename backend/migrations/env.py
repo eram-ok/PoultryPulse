@@ -39,6 +39,8 @@ from app.modules.alerts import delivery_models as alert_delivery_models  # noqa:
 
 from app.modules.audit import models as audit_models # noqa: F401
 
+from app.modules.jobs import models as jobs_models  # noqa: F401
+
 target_metadata = Base.metadata
 
 
@@ -87,5 +89,3 @@ if context.is_offline_mode():
     run_migrations_offline()
 else:
     run_migrations_online()
-
-

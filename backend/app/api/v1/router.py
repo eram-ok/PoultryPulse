@@ -27,6 +27,7 @@ from app.modules.flocks.router import (
 from app.modules.health.router import (
     router as health_router,
 )
+from app.modules.jobs.router import router as jobs_router
 from app.modules.houses.router import (
     router as houses_router,
 )
@@ -137,4 +138,5 @@ router.include_router(finance_router)
 router.include_router(reports_router)
 router.include_router(advanced_reports_router)
 router.include_router(alerts_router)
+router.include_router(jobs_router)
 router.include_router(audit_router)

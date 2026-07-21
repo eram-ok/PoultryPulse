@@ -37,6 +37,9 @@ from app.modules.audit.middleware import (
 from app.modules.audit.operational_registry import (
     install_operational_auditing,
 )
+from app.modules.jobs.scheduler import (
+    get_embedded_scheduler,
+)
 
 
 settings = get_settings()
@@ -64,6 +67,8 @@ async def lifespan(
         },
     )
 
+    embedded_scheduler = None
+
     try:
         if settings.startup_database_check_enabled:
             database = await check_database_readiness(
@@ -85,6 +90,11 @@ async def lifespan(
             if not database_up and settings.startup_database_check_required:
                 raise RuntimeError("The required startup database check did not pass.")
 
+        if settings.background_jobs_enabled and settings.background_jobs_run_in_api:
+            embedded_scheduler = get_embedded_scheduler()
+            await embedded_scheduler.start()
+            _app.state.background_job_scheduler = embedded_scheduler
+
         logger.info(
             "PoultryPulse application started.",
             extra={
@@ -105,6 +115,8 @@ async def lifespan(
                 "event": "application_stopping",
             },
         )
+        if embedded_scheduler is not None:
+            await embedded_scheduler.stop()
         dispose_database_engine()
 
 

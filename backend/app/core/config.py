@@ -103,6 +103,42 @@ class Settings(BaseSettings):
     request_logging_excluded_paths: str = "/api/v1/health/live,/api/v1/health/ready"
     uvicorn_access_log_enabled: bool = False
 
+    background_jobs_enabled: bool = False
+    background_jobs_run_in_api: bool = False
+    background_job_poll_seconds: int = Field(
+        default=30,
+        ge=5,
+        le=3600,
+    )
+    alert_refresh_job_enabled: bool = True
+    alert_refresh_interval_minutes: int = Field(
+        default=15,
+        ge=1,
+        le=1440,
+    )
+    notification_delivery_job_enabled: bool = True
+    notification_delivery_interval_seconds: int = Field(
+        default=60,
+        ge=5,
+        le=3600,
+    )
+    notification_delivery_batch_size: int = Field(
+        default=200,
+        ge=1,
+        le=1000,
+    )
+    job_history_cleanup_enabled: bool = True
+    job_history_cleanup_interval_hours: int = Field(
+        default=24,
+        ge=1,
+        le=168,
+    )
+    job_history_retention_days: int = Field(
+        default=90,
+        ge=7,
+        le=3650,
+    )
+
     jwt_secret_key: str
     jwt_algorithm: str = "HS256"
     jwt_issuer: str = "PoultryPulse"
@@ -248,6 +284,12 @@ class Settings(BaseSettings):
                 "STARTUP_DATABASE_CHECK_ENABLED must "
                 "be true when the startup database "
                 "check is required."
+            )
+
+        if self.background_jobs_run_in_api and not self.background_jobs_enabled:
+            raise ValueError(
+                "BACKGROUND_JOBS_ENABLED must be true "
+                "when BACKGROUND_JOBS_RUN_IN_API is true."
             )
 
         allowed_hosts = self.allowed_host_list
