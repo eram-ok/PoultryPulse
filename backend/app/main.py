@@ -1,4 +1,7 @@
 from app.modules.audit.middleware import AuditRequestContextMiddleware
+from app.modules.audit.operational_registry import (
+    install_operational_auditing,
+)
 from fastapi import FastAPI
 
 from app.api.v1.router import router as api_v1_router
@@ -46,3 +49,7 @@ app.include_router(
     api_v1_router,
     prefix=settings.api_v1_prefix,
 )
+
+# Stage 17C1: install farm-operation audit wrappers after
+# all API routers and service modules have been imported.
+install_operational_auditing()
