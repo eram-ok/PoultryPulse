@@ -43,16 +43,46 @@ export async function browserApiRequest<T>(
   }
 
   if (!response.ok) {
-    let payload: ApiErrorBody | null = null
+    type FastApiValidationItem = {
+      loc?: Array<string | number>
+      msg?: string
+      type?: string
+    }
+
+    type ErrorPayload = ApiErrorBody & {
+      detail?: FastApiValidationItem[] | string
+    }
+
+    let payload: ErrorPayload | null = null
 
     try {
-      payload = (await response.json()) as ApiErrorBody
+      payload = (await response.json()) as ErrorPayload
     } catch {
       payload = null
     }
 
+    const validationMessage = Array.isArray(payload?.detail)
+      ? payload.detail
+          .map((item) => {
+            const field = item.loc
+              ?.filter((part) => part !== "body")
+              .join(".")
+
+            if (field && item.msg) {
+              return `${field}: ${item.msg}`
+            }
+
+            return item.msg
+          })
+          .filter(Boolean)
+          .join(" ")
+      : typeof payload?.detail === "string"
+        ? payload.detail
+        : undefined
+
     throw new BrowserApiError(
       payload?.error?.message ??
+        validationMessage ??
         "PoultryPulse could not complete this request.",
       response.status,
       payload?.error?.code,
