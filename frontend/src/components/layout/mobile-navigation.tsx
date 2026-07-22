@@ -22,15 +22,16 @@ export function MobileNavigation() {
         <Button
           variant="ghost"
           size="icon"
-          className="rounded-xl lg:hidden"
+          className="rounded-xl border border-border/55 bg-card/60 shadow-sm lg:hidden"
           aria-label="Open navigation"
         >
           <Menu className="size-5" />
         </Button>
       </SheetTrigger>
+
       <SheetContent
         side="left"
-        className="w-[292px] border-sidebar-border bg-sidebar p-0"
+        className="w-[316px] border-none bg-transparent p-3 shadow-none"
       >
         <SheetTitle className="sr-only">
           PoultryPulse navigation
@@ -38,7 +39,10 @@ export function MobileNavigation() {
         <SheetDescription className="sr-only">
           Navigate to PoultryPulse farm modules.
         </SheetDescription>
-        <NavigationPanel onNavigate={() => setOpen(false)} />
+
+        <div className="floating-panel h-full overflow-hidden rounded-[28px]">
+          <NavigationPanel onNavigate={() => setOpen(false)} />
+        </div>
       </SheetContent>
     </Sheet>
   )
