@@ -60,6 +60,9 @@ def test_expected_tables_exist() -> None:
         "alert_events",
         "audit_logs",
         "background_job_runs",
+        "platform_users",
+        "platform_refresh_tokens",
+        "platform_audit_logs",
     }
 
     assert expected_tables.issubset(table_names)

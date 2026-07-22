@@ -5,6 +5,7 @@ from sqlalchemy import select, update
 from sqlalchemy.orm import Session, selectinload
 
 from app.modules.auth.models import RefreshToken
+from app.modules.farms.models import Farm
 from app.modules.users.models import Role, User
 from app.modules.users.repository import UserRepository
 
@@ -29,6 +30,12 @@ class AuthRepository:
 
     def get_user_by_id(self, user_id: UUID) -> User | None:
         return self.users.get_by_id(user_id)
+
+    def get_farm_by_id(
+        self,
+        farm_id: UUID,
+    ) -> Farm | None:
+        return self.database_session.get(Farm, farm_id)
 
     def get_refresh_token(
         self,

@@ -52,6 +52,7 @@ class AuthService:
         user_agent: str | None,
     ) -> tuple[str, str, RefreshToken]:
         claims = {
+            "principal_type": "farm_user",
             "farm_id": str(user.farm_id),
             "username": user.username,
         }
@@ -135,6 +136,15 @@ class AuthService:
                 error_code="inactive_account",
             )
 
+        farm = self.repository.get_farm_by_id(
+            user.farm_id
+        )
+        if farm is None or not farm.is_active:
+            raise AuthenticationError(
+                "This farm account is inactive.",
+                error_code="inactive_farm",
+            )
+
         if user.locked_until is not None and user.locked_until > current_time:
             raise AuthenticationError(
                 "This account is temporarily locked. Try again later.",
@@ -198,6 +208,15 @@ class AuthService:
                 error_code="incorrect_token_type",
             )
 
+        if payload.get("principal_type") not in {
+            None,
+            "farm_user",
+        }:
+            raise AuthenticationError(
+                "A platform token cannot refresh a farm session.",
+                error_code="invalid_farm_principal",
+            )
+
         jti = str(payload["jti"])
         refresh_record = self.repository.get_refresh_token(jti)
 
@@ -227,6 +246,15 @@ class AuthService:
             raise AuthenticationError(
                 "This user account is inactive.",
                 error_code="inactive_account",
+            )
+
+        farm = self.repository.get_farm_by_id(
+            user.farm_id
+        )
+        if farm is None or not farm.is_active:
+            raise AuthenticationError(
+                "This farm account is inactive.",
+                error_code="inactive_farm",
             )
 
         if str(user.id) != str(payload["sub"]):
@@ -267,7 +295,18 @@ class AuthService:
         if payload.get("type") != "refresh":
             return
 
-        refresh_record = self.repository.get_refresh_token(str(payload["jti"]))
+        if payload.get("principal_type") not in {
+            None,
+            "farm_user",
+        }:
+            raise AuthenticationError(
+                "A platform token cannot log out a farm session.",
+                error_code="invalid_farm_principal",
+            )
+
+        refresh_record = self.repository.get_refresh_token(
+            str(payload["jti"])
+        )
 
         if refresh_record is not None and refresh_record.revoked_at is None:
             refresh_record.revoked_at = datetime.now(UTC)

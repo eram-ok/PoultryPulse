@@ -51,6 +51,8 @@ class SecurityHardeningMiddleware:
         self.rate_limited_paths = {
             f"{prefix}/auth/login",
             f"{prefix}/auth/refresh",
+            f"{prefix}/platform/auth/login",
+            f"{prefix}/platform/auth/refresh",
         }
         self._rate_limit_events: dict[
             tuple[str, str],

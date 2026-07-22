@@ -103,3 +103,70 @@ def test_authenticated_user_can_view_farm(
 
     assert response.status_code == 200
     assert response.json()["id"] == str(farm.id)
+
+def test_inactive_farm_cannot_log_in(
+    client: TestClient,
+    auth_context: dict[str, object],
+    database_session,
+) -> None:
+    farm = auth_context["farm"]
+    farm.is_active = False
+    database_session.commit()
+
+    response = client.post(
+        "/api/v1/auth/login",
+        data={
+            "username": auth_context["login_identifier"],
+            "password": auth_context["password"],
+        },
+    )
+
+    assert response.status_code == 401
+    assert response.json()["error"]["code"] == "inactive_farm"
+
+
+def test_inactive_farm_access_token_is_rejected(
+    client: TestClient,
+    auth_context: dict[str, object],
+    database_session,
+) -> None:
+    farm = auth_context["farm"]
+    farm.is_active = False
+    database_session.commit()
+
+    response = client.get(
+        f"/api/v1/farms/{farm.id}",
+        headers=auth_context["headers"],
+    )
+
+    assert response.status_code == 401
+    assert response.json()["error"]["code"] == "inactive_farm"
+
+
+def test_inactive_farm_refresh_is_rejected(
+    client: TestClient,
+    auth_context: dict[str, object],
+    database_session,
+) -> None:
+    login_response = client.post(
+        "/api/v1/auth/login",
+        data={
+            "username": auth_context["login_identifier"],
+            "password": auth_context["password"],
+        },
+    )
+    refresh_token = login_response.json()["refresh_token"]
+
+    farm = auth_context["farm"]
+    farm.is_active = False
+    database_session.commit()
+
+    response = client.post(
+        "/api/v1/auth/refresh",
+        json={
+            "refresh_token": refresh_token,
+        },
+    )
+
+    assert response.status_code == 401
+    assert response.json()["error"]["code"] == "inactive_farm"

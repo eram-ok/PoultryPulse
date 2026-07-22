@@ -45,6 +45,19 @@ def get_current_user(
             error_code="incorrect_token_type",
         )
 
+    principal_type = payload.get("principal_type")
+    if principal_type not in {None, "farm_user"}:
+        raise AuthenticationError(
+            "A platform token cannot access farm resources.",
+            error_code="invalid_farm_principal",
+        )
+
+    if principal_type is None and payload.get("farm_id") is None:
+        raise AuthenticationError(
+            "The token does not represent a farm user.",
+            error_code="invalid_farm_principal",
+        )
+
     try:
         user_id = UUID(str(payload["sub"]))
     except (TypeError, ValueError) as exc:
@@ -65,6 +78,16 @@ def get_current_user(
         raise AuthenticationError(
             "This user account is inactive.",
             error_code="inactive_account",
+        )
+
+    farm = AuthRepository(
+        database_session
+    ).get_farm_by_id(user.farm_id)
+
+    if farm is None or not farm.is_active:
+        raise AuthenticationError(
+            "This farm account is inactive.",
+            error_code="inactive_farm",
         )
 
     if str(user.farm_id) != str(payload.get("farm_id")):

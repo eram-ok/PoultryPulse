@@ -41,6 +41,8 @@ from app.modules.audit import models as audit_models # noqa: F401
 
 from app.modules.jobs import models as jobs_models  # noqa: F401
 
+from app.modules.platform import models as platform_models  # noqa: F401
+
 target_metadata = Base.metadata
 
 

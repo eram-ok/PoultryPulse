@@ -31,6 +31,9 @@ from app.modules.jobs.router import router as jobs_router
 from app.modules.houses.router import (
     router as houses_router,
 )
+from app.modules.platform.router import (
+    router as platform_router,
+)
 from app.modules.production.router import (
     router as production_router,
 )
@@ -122,6 +125,7 @@ async def readiness_check(
 
 
 router.include_router(auth_router)
+router.include_router(platform_router)
 router.include_router(users_router)
 router.include_router(roles_router)
 router.include_router(farms_router)
