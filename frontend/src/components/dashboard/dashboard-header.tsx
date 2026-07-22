@@ -1,10 +1,9 @@
 import {
   CalendarDays,
   MapPin,
-  Plus,
-  Sparkles,
 } from "lucide-react"
 
+import { DashboardActivityMenu } from "@/components/dashboard/dashboard-activity-menu"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import type { DashboardResponse } from "@/lib/api/types"
@@ -95,11 +94,7 @@ export function DashboardHeader({
         {session.permissions.includes(
           "production.create",
         ) ? (
-          <Button className="rounded-xl shadow-lg shadow-primary/20">
-            <Plus className="size-4" />
-            Record activity
-            <Sparkles className="size-3.5 opacity-75" />
-          </Button>
+          <DashboardActivityMenu />
         ) : null}
       </div>
     </header>
