@@ -48,7 +48,7 @@ export function FlockHealthCard({
   )
 
   return (
-    <Card className="rounded-2xl border-border/70 bg-card/82 backdrop-blur">
+    <Card className="rounded-[24px] border-border/70 bg-gradient-to-br from-chart-5/7 via-card/90 to-card/88 backdrop-blur-xl">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>

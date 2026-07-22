@@ -40,7 +40,7 @@ export function RecentActivity({
   canViewAudit,
 }: RecentActivityProps) {
   return (
-    <Card className="rounded-2xl border-border/70 bg-card/82 backdrop-blur">
+    <Card className="overflow-hidden rounded-[24px] border-border/70 bg-card/88 backdrop-blur-xl">
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
           <div className="flex items-center gap-2">

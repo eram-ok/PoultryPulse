@@ -24,7 +24,7 @@ export function FeedStockChart({
   lowStockItems,
 }: FeedStockChartProps) {
   return (
-    <Card className="rounded-2xl border-border/70 bg-card/82 backdrop-blur">
+    <Card className="rounded-[24px] border-border/70 bg-gradient-to-br from-info/8 via-card/90 to-card/88 backdrop-blur-xl">
       <CardHeader>
         <div className="flex items-center justify-between gap-3">
           <CardTitle>Feed stock</CardTitle>

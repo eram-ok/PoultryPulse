@@ -50,7 +50,7 @@ export function ProductionTrendChart({
   const hasData = data.some((point) => point.eggs > 0)
 
   return (
-    <Card className="rounded-2xl border-border/70 bg-card/82 backdrop-blur">
+    <Card className="overflow-hidden rounded-[24px] border-border/70 bg-card/88 shadow-[0_24px_60px_-44px_rgba(27,92,62,0.55)] backdrop-blur-xl">
       <CardHeader className="flex flex-row items-start justify-between">
         <div>
           <div className="mb-2 flex items-center gap-2">

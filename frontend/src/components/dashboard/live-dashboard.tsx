@@ -310,7 +310,7 @@ export function LiveDashboard() {
   ]
 
   return (
-    <div className="space-y-6 pb-24 lg:pb-8">
+    <div className="space-y-7 pb-24 lg:pb-10">
       <DashboardHeader
         session={session}
         dashboard={dashboard}
@@ -318,7 +318,7 @@ export function LiveDashboard() {
 
       <section
         aria-label="Farm performance overview"
-        className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+        className="grid items-start gap-4 sm:grid-cols-2 xl:grid-cols-4 2xl:gap-5"
       >
         <KpiCard
           title="Eggs collected today"
@@ -418,7 +418,7 @@ export function LiveDashboard() {
         />
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[minmax(0,1.65fr)_minmax(320px,0.85fr)]">
+      <section className="grid gap-5 xl:grid-cols-[minmax(0,1.65fr)_minmax(320px,0.85fr)]">
         <ProductionTrendChart
           data={productionPoints}
           total={productionTotal}
@@ -432,7 +432,7 @@ export function LiveDashboard() {
         />
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
+      <section className="grid gap-5 lg:grid-cols-2 xl:grid-cols-3">
         <FeedStockChart
           totalFeedKg={toNumber(
             dashboard.inventory.total_feed_kg,
