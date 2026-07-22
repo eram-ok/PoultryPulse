@@ -1,11 +1,14 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.core.database import get_database_session
-from app.core.exceptions import ResourceNotFoundError
+from app.core.exceptions import (
+    AuthorizationError,
+    ResourceNotFoundError,
+)
 from app.modules.audit.constants import AuditAction
 from app.modules.audit.integration import (
     farm_settings_snapshot,
@@ -13,9 +16,11 @@ from app.modules.audit.integration import (
     record_audit_safely,
     record_failure_safely,
 )
-from app.modules.auth.dependencies import require_permissions
+from app.modules.auth.dependencies import (
+    CurrentUser,
+    require_permissions,
+)
 from app.modules.farms.schemas import (
-    FarmCreate,
     FarmListResponse,
     FarmResponse,
     FarmSettingsResponse,
@@ -52,56 +57,19 @@ def verify_farm_access(
 
 @router.post(
     "",
-    response_model=FarmResponse,
-    status_code=status.HTTP_201_CREATED,
-    summary="Register a new poultry farm",
+    include_in_schema=False,
 )
 def create_farm(
-    payload: FarmCreate,
-    database_session: DatabaseSession,
-    current_user: Annotated[
-        User,
-        Depends(require_permissions("farms.create")),
-    ],
-) -> FarmResponse:
-    service = FarmService(database_session)
+    current_user: CurrentUser,
+) -> None:
+    """Block tenant users from creating another tenant."""
 
-    try:
-        farm = service.create_farm(payload)
-    except Exception as error:
-        record_failure_safely(
-            database_session,
-            module="farms",
-            action=AuditAction.CREATE,
-            description="A farm-registration attempt failed.",
-            error=error,
-            farm_id=current_user.farm_id,
-            actor_user_id=current_user.id,
-            actor_username=current_user.username,
-            resource_type="Farm",
-            metadata={
-                "requested_farm_code": payload.farm_code,
-                "requested_name": payload.name,
-            },
-        )
-        raise
-
-    record_audit_safely(
-        database_session,
-        module="farms",
-        action=AuditAction.CREATE,
-        description="Registered a poultry farm.",
-        farm_id=current_user.farm_id,
-        actor_user_id=current_user.id,
-        actor_username=current_user.username,
-        resource_type="Farm",
-        resource_id=farm.id,
-        after_values=farm_snapshot(farm),
-        metadata={
-            "target_farm_id": farm.id,
-        },
+    _ = current_user
+    raise AuthorizationError(
+        "Farm registration is restricted to "
+        "PoultryPulse platform administrators.",
+        error_code="platform_farm_registration_required",
     )
-    return FarmResponse.model_validate(farm)
 
 
 @router.get(

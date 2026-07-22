@@ -9,6 +9,7 @@ from sqlalchemy import (
     CheckConstraint,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
     Numeric,
     String,
@@ -19,12 +20,38 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+from app.modules.farms.constants import FarmLifecycleStatus
 
 
 class Farm(Base):
     """Represents a poultry farm registered in PoultryPulse."""
 
     __tablename__ = "farms"
+    __table_args__ = (
+        CheckConstraint(
+            "lifecycle_status IN "
+            "('ACTIVE', 'SUSPENDED', 'DEACTIVATED')",
+            name="ck_farms_lifecycle_status_valid",
+        ),
+        CheckConstraint(
+            "(lifecycle_status = 'ACTIVE' AND is_active = TRUE) "
+            "OR "
+            "(lifecycle_status IN ('SUSPENDED', 'DEACTIVATED') "
+            "AND is_active = FALSE)",
+            name="ck_farms_lifecycle_active_consistency",
+        ),
+        CheckConstraint(
+            "lifecycle_status = 'ACTIVE' "
+            "OR "
+            "(lifecycle_reason IS NOT NULL "
+            "AND length(trim(lifecycle_reason)) >= 5)",
+            name="ck_farms_lifecycle_reason_required",
+        ),
+        Index(
+            "ix_farms_lifecycle_status",
+            "lifecycle_status",
+        ),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -93,6 +120,46 @@ class Farm(Base):
         nullable=False,
         default=True,
         server_default="true",
+    )
+
+    lifecycle_status: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+        default=FarmLifecycleStatus.ACTIVE.value,
+        server_default=FarmLifecycleStatus.ACTIVE.value,
+    )
+
+    lifecycle_reason: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
+    lifecycle_changed_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+
+    lifecycle_changed_by_platform_user_id: Mapped[
+        uuid.UUID | None
+    ] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey(
+            "platform_users.id",
+            ondelete="SET NULL",
+        ),
+        nullable=True,
+        index=True,
+    )
+
+    suspended_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
+    deactivated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
     )
 
     created_at: Mapped[datetime] = mapped_column(

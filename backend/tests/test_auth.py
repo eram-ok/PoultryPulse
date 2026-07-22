@@ -1,5 +1,7 @@
 from fastapi.testclient import TestClient
 
+from app.modules.farms.constants import FarmLifecycleStatus
+
 
 def test_login_returns_token_pair(
     client: TestClient,
@@ -111,6 +113,12 @@ def test_inactive_farm_cannot_log_in(
 ) -> None:
     farm = auth_context["farm"]
     farm.is_active = False
+    farm.lifecycle_status = (
+        FarmLifecycleStatus.DEACTIVATED.value
+    )
+    farm.lifecycle_reason = (
+        "Deactivated for authentication testing."
+    )
     database_session.commit()
 
     response = client.post(
@@ -132,6 +140,12 @@ def test_inactive_farm_access_token_is_rejected(
 ) -> None:
     farm = auth_context["farm"]
     farm.is_active = False
+    farm.lifecycle_status = (
+        FarmLifecycleStatus.DEACTIVATED.value
+    )
+    farm.lifecycle_reason = (
+        "Deactivated for authentication testing."
+    )
     database_session.commit()
 
     response = client.get(
@@ -159,6 +173,12 @@ def test_inactive_farm_refresh_is_rejected(
 
     farm = auth_context["farm"]
     farm.is_active = False
+    farm.lifecycle_status = (
+        FarmLifecycleStatus.DEACTIVATED.value
+    )
+    farm.lifecycle_reason = (
+        "Deactivated for authentication testing."
+    )
     database_session.commit()
 
     response = client.post(

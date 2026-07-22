@@ -10,6 +10,8 @@ from pydantic import (
     field_validator,
 )
 
+from app.modules.farms.constants import FarmLifecycleStatus
+
 
 class FarmSettingsCreate(BaseModel):
     """Optional settings supplied while creating a farm."""
@@ -136,7 +138,9 @@ class FarmCreate(BaseModel):
 
 
 class FarmUpdate(BaseModel):
-    """Farm fields that can be changed after registration."""
+    """Farm fields that a tenant may change after registration."""
+
+    model_config = ConfigDict(extra="forbid")
 
     farm_code: str | None = Field(default=None, min_length=2, max_length=30)
     name: str | None = Field(default=None, min_length=2, max_length=150)
@@ -152,8 +156,6 @@ class FarmUpdate(BaseModel):
         min_length=3,
         max_length=3,
     )
-    is_active: bool | None = None
-
     @field_validator("farm_code")
     @classmethod
     def normalize_farm_code(cls, value: str | None) -> str | None:
@@ -206,6 +208,12 @@ class FarmResponse(BaseModel):
     timezone: str
     currency_code: str
     is_active: bool
+    lifecycle_status: FarmLifecycleStatus
+    lifecycle_reason: str | None
+    lifecycle_changed_at: datetime
+    lifecycle_changed_by_platform_user_id: UUID | None
+    suspended_at: datetime | None
+    deactivated_at: datetime | None
     created_at: datetime
     updated_at: datetime
     settings: FarmSettingsResponse | None

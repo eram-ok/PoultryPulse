@@ -365,10 +365,13 @@ def client(
 
     app.dependency_overrides[get_database_session] = override_database_session
 
-    with TestClient(app) as test_client:
-        yield test_client
+    test_client = TestClient(app)
 
-    app.dependency_overrides.clear()
+    try:
+        yield test_client
+    finally:
+        test_client.close()
+        app.dependency_overrides.clear()
 
 
 @pytest.fixture()

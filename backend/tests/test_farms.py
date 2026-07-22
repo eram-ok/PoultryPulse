@@ -6,7 +6,9 @@ from fastapi.testclient import TestClient
 def build_farm_payload(
     farm_code: str | None = None,
 ) -> dict[str, object]:
-    unique_code = farm_code or (f"PP-{uuid4().hex[:8].upper()}")
+    unique_code = farm_code or (
+        f"PP-{uuid4().hex[:8].upper()}"
+    )
 
     return {
         "farm_code": unique_code,
@@ -31,7 +33,7 @@ def build_farm_payload(
     }
 
 
-def test_create_farm_requires_permission(
+def test_tenant_cannot_create_another_farm(
     authenticated_client: TestClient,
 ) -> None:
     response = authenticated_client.post(
@@ -39,8 +41,10 @@ def test_create_farm_requires_permission(
         json=build_farm_payload(),
     )
 
-    assert response.status_code == 201
-    assert response.json()["settings"]["eggs_per_tray"] == 30
+    assert response.status_code == 403
+    assert response.json()["error"]["code"] == (
+        "platform_farm_registration_required"
+    )
 
 
 def test_get_own_farm(
@@ -49,10 +53,13 @@ def test_get_own_farm(
 ) -> None:
     farm = auth_context["farm"]
 
-    response = authenticated_client.get(f"/api/v1/farms/{farm.id}")
+    response = authenticated_client.get(
+        f"/api/v1/farms/{farm.id}"
+    )
 
     assert response.status_code == 200
     assert response.json()["id"] == str(farm.id)
+    assert response.json()["lifecycle_status"] == "ACTIVE"
 
 
 def test_update_own_farm(
@@ -74,6 +81,22 @@ def test_update_own_farm(
     assert response.json()["district"] == "Wakiso"
 
 
+def test_tenant_cannot_change_farm_lifecycle(
+    authenticated_client: TestClient,
+    auth_context: dict[str, object],
+) -> None:
+    farm = auth_context["farm"]
+
+    response = authenticated_client.patch(
+        f"/api/v1/farms/{farm.id}",
+        json={
+            "is_active": False,
+        },
+    )
+
+    assert response.status_code == 422
+
+
 def test_update_farm_settings(
     authenticated_client: TestClient,
     auth_context: dict[str, object],
@@ -92,43 +115,29 @@ def test_update_farm_settings(
     assert response.json()["eggs_per_tray"] == 24
 
 
-def test_duplicate_farm_code_is_rejected(
-    authenticated_client: TestClient,
-) -> None:
-    farm_code = f"DUP-{uuid4().hex[:8].upper()}"
-
-    first_response = authenticated_client.post(
-        "/api/v1/farms",
-        json=build_farm_payload(farm_code),
-    )
-
-    second_response = authenticated_client.post(
-        "/api/v1/farms",
-        json=build_farm_payload(farm_code),
-    )
-
-    assert first_response.status_code == 201
-    assert second_response.status_code == 409
-
-
 def test_list_farms_returns_current_farm(
     authenticated_client: TestClient,
     auth_context: dict[str, object],
 ) -> None:
     farm = auth_context["farm"]
 
-    response = authenticated_client.get("/api/v1/farms")
-
+    response = authenticated_client.get(
+        "/api/v1/farms"
+    )
     response_body = response.json()
 
     assert response.status_code == 200
     assert response_body["total"] == 1
-    assert response_body["items"][0]["id"] == str(farm.id)
+    assert response_body["items"][0]["id"] == str(
+        farm.id
+    )
 
 
 def test_other_farm_is_hidden(
     authenticated_client: TestClient,
 ) -> None:
-    response = authenticated_client.get(f"/api/v1/farms/{uuid4()}")
+    response = authenticated_client.get(
+        f"/api/v1/farms/{uuid4()}"
+    )
 
     assert response.status_code == 404
