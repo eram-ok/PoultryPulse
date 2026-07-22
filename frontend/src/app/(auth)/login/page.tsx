@@ -29,6 +29,7 @@ interface LoginPageProps {
     next?: string
     reason?: string
     passwordChanged?: string
+    accountActivated?: string
   }>
 }
 
@@ -46,6 +47,12 @@ export default async function LoginPage({
       ? "Your session expired. Sign in again to continue."
       : parameters.reason === "api-unavailable"
         ? "The API was temporarily unavailable. Try signing in again."
+        : null
+  const successMessage =
+    parameters.accountActivated === "1"
+      ? "Administrator account activated. Sign in with your farm code, username, and new password."
+      : parameters.passwordChanged === "1"
+        ? "Password updated. Sign in with your new password."
         : null
 
   return (
@@ -139,10 +146,9 @@ export default async function LoginPage({
                 </div>
               </CardHeader>
               <CardContent className="px-6 pb-6 sm:px-8 sm:pb-8">
-                {parameters.passwordChanged === "1" ? (
-                  <div className="mb-5 rounded-xl border border-primary/25 bg-primary/8 px-4 py-3 text-sm text-primary">
-                    Password updated. Sign in with your new
-                    password.
+                {successMessage ? (
+                  <div className="mb-5 rounded-xl border border-primary/25 bg-primary/8 px-4 py-3 text-sm leading-6 text-primary">
+                    {successMessage}
                   </div>
                 ) : null}
 
