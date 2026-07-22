@@ -4,6 +4,7 @@ from uuid import UUID
 from fastapi import (
     APIRouter,
     Depends,
+    Header,
     Query,
     Response,
     status,
@@ -112,6 +113,14 @@ def create_farm(
     response: Response,
     database_session: DatabaseSession,
     current_user: CurrentPlatformSuperAdmin,
+    idempotency_key: Annotated[
+        str | None,
+        Header(
+            alias="Idempotency-Key",
+            min_length=8,
+            max_length=128,
+        ),
+    ] = None,
 ) -> PlatformFarmOnboardingResponse:
     response.headers["Cache-Control"] = (
         "no-store, max-age=0"
@@ -123,6 +132,7 @@ def create_farm(
         return service.create_farm(
             payload,
             actor=current_user,
+            idempotency_key=idempotency_key,
         )
     except Exception as error:
         record_failure(
@@ -139,6 +149,9 @@ def create_farm(
                 "requested_name": payload.name,
                 "requested_administrator_username": (
                     payload.first_administrator.username
+                ),
+                "idempotency_key_supplied": (
+                    idempotency_key is not None
                 ),
             },
         )

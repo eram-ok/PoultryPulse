@@ -15,6 +15,10 @@ from app.modules.farms.schemas import (
     FarmSettingsResponse,
     FarmUpdate,
 )
+from app.modules.onboarding.schemas import (
+    PlatformFarmInvitationResponse,
+)
+
 
 class PlatformFirstFarmAdministratorCreate(BaseModel):
     """Identity details for the first administrator of a farm."""
@@ -196,15 +200,11 @@ class PlatformFarmListResponse(BaseModel):
 
 
 class PlatformFarmOnboardingResponse(BaseModel):
-    """One-time farm onboarding result."""
+    """One-time secure farm-onboarding result."""
 
     farm: PlatformFarmDetailResponse
     administrator: PlatformFarmAdministratorResponse
-    temporary_password: str = Field(
-        min_length=12,
-        max_length=128,
-        description=(
-            "Generated temporary password returned once. "
-            "It is never stored in plain text."
-        ),
-    )
+    invitation: PlatformFarmInvitationResponse
+    setup_url: str | None
+    setup_url_returned_once: bool
+    idempotent_replay: bool = False

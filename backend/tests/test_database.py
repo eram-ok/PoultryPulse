@@ -63,6 +63,7 @@ def test_expected_tables_exist() -> None:
         "platform_users",
         "platform_refresh_tokens",
         "platform_audit_logs",
+        "platform_farm_invitations",
     }
 
     assert expected_tables.issubset(table_names)

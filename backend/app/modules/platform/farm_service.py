@@ -18,6 +18,12 @@ from app.modules.audit.context import get_audit_context
 from app.modules.farms.constants import FarmLifecycleStatus
 from app.modules.farms.models import Farm, FarmSettings
 from app.modules.farms.schemas import FarmSettingsResponse
+from app.modules.onboarding.schemas import (
+    PlatformFarmInvitationResponse,
+)
+from app.modules.onboarding.service import (
+    FarmOnboardingService,
+)
 from app.modules.platform.farm_repository import (
     RECENT_LOGIN_WINDOW_DAYS,
     PlatformFarmRecord,
@@ -70,25 +76,9 @@ class PlatformFarmService:
         )
 
     @staticmethod
-    def _temporary_password() -> str:
-        uppercase = "ABCDEFGHJKLMNPQRSTUVWXYZ"
-        lowercase = "abcdefghijkmnopqrstuvwxyz"
-        digits = "23456789"
-        symbols = "!@#$%&*+-_"
-        alphabet = uppercase + lowercase + digits + symbols
-
-        characters = [
-            secrets.choice(uppercase),
-            secrets.choice(lowercase),
-            secrets.choice(digits),
-            secrets.choice(symbols),
-        ]
-        characters.extend(
-            secrets.choice(alphabet)
-            for _ in range(16)
-        )
-        secrets.SystemRandom().shuffle(characters)
-        return "".join(characters)
+    def _unusable_password() -> str:
+        # This random value is hashed but never shared.
+        return secrets.token_urlsafe(64)
 
     @staticmethod
     def _farm_snapshot(
@@ -338,7 +328,53 @@ class PlatformFarmService:
         payload: PlatformFarmCreateRequest,
         *,
         actor: PlatformUser,
+        idempotency_key: str | None = None,
     ) -> PlatformFarmOnboardingResponse:
+        onboarding = FarmOnboardingService(
+            self.database_session
+        )
+        request_fingerprint = onboarding.request_fingerprint(
+            payload.model_dump(mode="json")
+        )
+        existing_invitation = (
+            onboarding.find_idempotent_replay(
+                actor=actor,
+                idempotency_key=idempotency_key,
+                request_fingerprint=request_fingerprint,
+            )
+        )
+
+        if existing_invitation is not None:
+            record = self.repository.get_farm(
+                existing_invitation.farm_id
+            )
+            if record is None:
+                raise ResourceNotFoundError(
+                    "The idempotent farm onboarding record is incomplete.",
+                    error_code="onboarding_replay_farm_not_found",
+                )
+            administrator = (
+                onboarding.administrator_for_invitation(
+                    existing_invitation
+                )
+            )
+            return PlatformFarmOnboardingResponse(
+                farm=self._detail(record),
+                administrator=(
+                    PlatformFarmAdministratorResponse.model_validate(
+                        administrator
+                    )
+                ),
+                invitation=(
+                    PlatformFarmInvitationResponse.model_validate(
+                        existing_invitation
+                    )
+                ),
+                setup_url=None,
+                setup_url_returned_once=False,
+                idempotent_replay=True,
+            )
+
         if (
             self.repository.get_farm_by_code(
                 payload.farm_code
@@ -386,8 +422,6 @@ class PlatformFarmService:
         farm.settings = FarmSettings(**settings_data)
         self.database_session.add(farm)
 
-        temporary_password = self._temporary_password()
-
         try:
             self.database_session.flush()
 
@@ -432,7 +466,7 @@ class PlatformFarmService:
                     "telephone"
                 ],
                 password_hash=hash_password(
-                    temporary_password
+                    self._unusable_password()
                 ),
                 first_name=administrator_data[
                     "first_name"
@@ -440,8 +474,8 @@ class PlatformFarmService:
                 last_name=administrator_data[
                     "last_name"
                 ],
-                is_active=True,
-                is_verified=True,
+                is_active=False,
+                is_verified=False,
                 must_change_password=True,
             )
             administrator.roles = [
@@ -449,6 +483,17 @@ class PlatformFarmService:
             ]
             self.database_session.add(administrator)
             self.database_session.flush()
+
+            invitation, _, setup_url = (
+                onboarding.prepare_invitation(
+                    farm=farm,
+                    administrator=administrator,
+                    actor=actor,
+                    idempotency_key=idempotency_key,
+                    request_fingerprint=request_fingerprint,
+                    issued_at=now,
+                )
+            )
 
             self.database_session.add(
                 self._success_audit(
@@ -467,8 +512,36 @@ class PlatformFarmService:
                         "default_roles": sorted(
                             role_map
                         ),
-                        "temporary_password_returned_once": (
+                        "administrator_activation_required": (
                             True
+                        ),
+                        "invitation_id": str(
+                            invitation.id
+                        ),
+                    },
+                )
+            )
+            self.database_session.add(
+                self._success_audit(
+                    actor=actor,
+                    farm=farm,
+                    action="FARM_ONBOARDING_CREATED",
+                    description=(
+                        "Created a secure farm administrator "
+                        "onboarding invitation."
+                    ),
+                    metadata={
+                        "invitation_id": str(
+                            invitation.id
+                        ),
+                        "administrator_user_id": str(
+                            administrator.id
+                        ),
+                        "expires_at": (
+                            invitation.expires_at.isoformat()
+                        ),
+                        "idempotency_key_supplied": (
+                            idempotency_key is not None
                         ),
                     },
                 )
@@ -485,6 +558,12 @@ class PlatformFarmService:
             self.database_session.rollback()
             raise
 
+        invitation = onboarding.deliver_invitation(
+            invitation.id,
+            setup_url=setup_url,
+            actor=actor,
+        )
+
         record = self.repository.get_farm(farm.id)
         if record is None:
             raise ResourceNotFoundError(
@@ -499,7 +578,14 @@ class PlatformFarmService:
                     administrator
                 )
             ),
-            temporary_password=temporary_password,
+            invitation=(
+                PlatformFarmInvitationResponse.model_validate(
+                    invitation
+                )
+            ),
+            setup_url=setup_url,
+            setup_url_returned_once=True,
+            idempotent_replay=False,
         )
 
     def update_farm(

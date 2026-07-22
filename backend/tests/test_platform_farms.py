@@ -149,7 +149,7 @@ def test_non_super_admin_cannot_manage_farms(
     )
 
 
-def test_platform_onboarding_is_atomic_and_returns_password_once(
+def test_platform_onboarding_is_atomic_and_returns_invitation_once(
     client: TestClient,
     auth_context: dict[str, object],
     database_session: Session,
@@ -171,15 +171,20 @@ def test_platform_onboarding_is_atomic_and_returns_password_once(
         "no-store, max-age=0"
     )
     body = response.json()
-    temporary_password = body["temporary_password"]
+    setup_url = body["setup_url"]
     farm_id = body["farm"]["id"]
     farm_uuid = UUID(farm_id)
 
-    assert temporary_password
+    assert setup_url
+    assert "temporary_password" not in body
     assert body["farm"]["lifecycle_status"] == "ACTIVE"
+    assert body["administrator"]["is_active"] is False
+    assert body["administrator"]["is_verified"] is False
     assert body["administrator"][
         "must_change_password"
     ] is True
+    assert body["invitation"]["status"] == "PENDING"
+    assert body["setup_url_returned_once"] is True
 
     roles = list(
         database_session.scalars(
@@ -219,24 +224,15 @@ def test_platform_onboarding_is_atomic_and_returns_password_once(
         )
     )
     assert administrator is not None
-
-    login_response = client.post(
-        "/api/v1/auth/login",
-        data={
-            "username": (
-                f"{payload['farm_code']}:"
-                f"{payload['first_administrator']['username']}"
-            ),
-            "password": temporary_password,
-        },
-    )
-    assert login_response.status_code == 200
+    assert administrator.is_active is False
+    assert administrator.is_verified is False
 
     detail_response = client.get(
         f"/api/v1/platform/farms/{farm_id}",
         headers=headers,
     )
     assert detail_response.status_code == 200
+    assert "setup_url" not in detail_response.json()
     assert "temporary_password" not in (
         detail_response.json()
     )
@@ -250,7 +246,7 @@ def test_platform_onboarding_is_atomic_and_returns_password_once(
         )
     )
     assert audit is not None
-    assert temporary_password not in json.dumps(
+    assert setup_url not in json.dumps(
         audit.metadata_json
     )
 

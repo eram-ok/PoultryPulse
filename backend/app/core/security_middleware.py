@@ -53,6 +53,8 @@ class SecurityHardeningMiddleware:
             f"{prefix}/auth/refresh",
             f"{prefix}/platform/auth/login",
             f"{prefix}/platform/auth/refresh",
+            f"{prefix}/onboarding/invitations/validate",
+            f"{prefix}/onboarding/invitations/accept",
         }
         self._rate_limit_events: dict[
             tuple[str, str],
@@ -116,7 +118,10 @@ class SecurityHardeningMiddleware:
             ),
         }
 
-        if "/auth/" in path:
+        if (
+            "/auth/" in path
+            or "/onboarding/invitations/" in path
+        ):
             headers[b"cache-control"] = b"no-store, max-age=0"
             headers[b"pragma"] = b"no-cache"
 

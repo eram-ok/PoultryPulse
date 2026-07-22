@@ -171,6 +171,15 @@ class Settings(BaseSettings):
         le=1440,
     )
 
+    farm_invitation_expiry_hours: int = Field(
+        default=72,
+        ge=1,
+        le=720,
+    )
+    farm_onboarding_setup_base_url: str = (
+        "http://localhost:3000/setup-account"
+    )
+
     allowed_hosts: str = "localhost,127.0.0.1,testserver"
     cors_allowed_origins: str = ""
     cors_allow_credentials: bool = True
