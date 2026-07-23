@@ -1,4 +1,4 @@
-﻿import type { Metadata, Viewport } from "next"
+import type { Metadata, Viewport } from "next"
 import { GeistMono } from "geist/font/mono"
 import { GeistSans } from "geist/font/sans"
 
@@ -11,7 +11,7 @@ import "./globals.css"
 export const metadata: Metadata = {
   title: {
     default: "PoultryPulse",
-    template: "%s Â· PoultryPulse",
+    template: "%s | PoultryPulse",
   },
   description:
     "A modern poultry farm operations, production, health, sales, and finance workspace.",
