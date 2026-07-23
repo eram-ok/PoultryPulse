@@ -98,8 +98,10 @@ def onboarding_payload(
 def setup_token(response_body: dict[str, object]) -> str:
     setup_url = response_body["setup_url"]
     assert isinstance(setup_url, str)
-    query = parse_qs(urlparse(setup_url).query)
-    return query["token"][0]
+    parsed = urlparse(setup_url)
+    assert "token=" not in parsed.query
+    fragment = parse_qs(parsed.fragment)
+    return fragment["token"][0]
 
 
 def create_onboarding(

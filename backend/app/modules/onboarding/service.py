@@ -70,15 +70,20 @@ class FarmOnboardingService:
     def _setup_url(self, token: str) -> str:
         base_url = self.settings.farm_onboarding_setup_base_url.strip()
         parts = urlsplit(base_url)
-        query = dict(parse_qsl(parts.query, keep_blank_values=True))
-        query["token"] = token
+        fragment = dict(
+            parse_qsl(
+                parts.fragment,
+                keep_blank_values=True,
+            )
+        )
+        fragment["token"] = token
         return urlunsplit(
             (
                 parts.scheme,
                 parts.netloc,
                 parts.path,
-                urlencode(query),
-                parts.fragment,
+                parts.query,
+                urlencode(fragment),
             )
         )
 

@@ -30,7 +30,58 @@ const navigation = [
     label: "Overview",
     icon: LayoutDashboard,
   },
+  {
+    href: "/platform/farms",
+    label: "Farm registry",
+    icon: Building2,
+  },
 ] as const
+
+function PlatformNavigation({
+  pathname,
+  mobile = false,
+}: {
+  pathname: string
+  mobile?: boolean
+}) {
+  return (
+    <nav
+      className={cn(
+        mobile
+          ? "flex gap-2 overflow-x-auto px-4 py-3"
+          : "flex-1 space-y-1 p-3",
+      )}
+    >
+      {navigation.map((item) => {
+        const Icon = item.icon
+        const active =
+          pathname === item.href ||
+          pathname.startsWith(
+            `${item.href}/`,
+          )
+
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={cn(
+              "flex items-center gap-3 rounded-xl text-sm font-medium transition",
+              mobile
+                ? "shrink-0 px-3 py-2"
+                : "px-3 py-2.5",
+              active
+                ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-lg shadow-primary/20"
+                : "text-sidebar-foreground/72 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+            )}
+          >
+            <Icon className="size-[18px]" />
+            {item.label}
+          </Link>
+        )
+      })}
+    </nav>
+  )
+}
 
 export function PlatformShell({
   children,
@@ -76,32 +127,7 @@ export function PlatformShell({
           </div>
         </div>
 
-        <nav className="flex-1 space-y-1 p-3">
-          {navigation.map((item) => {
-            const Icon = item.icon
-            const active =
-              pathname === item.href ||
-              pathname.startsWith(
-                `${item.href}/`,
-              )
-
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition",
-                  active
-                    ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-lg shadow-primary/20"
-                    : "text-sidebar-foreground/72 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                )}
-              >
-                <Icon className="size-[18px]" />
-                {item.label}
-              </Link>
-            )
-          })}
-        </nav>
+        <PlatformNavigation pathname={pathname} />
 
         <div className="border-t border-sidebar-border/70 p-4">
           <div className="mb-3 flex items-center gap-3 rounded-2xl bg-sidebar-accent/55 p-3">
@@ -165,6 +191,13 @@ export function PlatformShell({
                 <LogOut className="size-4" />
               </Button>
             </div>
+          </div>
+
+          <div className="border-t border-border/60 lg:hidden">
+            <PlatformNavigation
+              pathname={pathname}
+              mobile
+            />
           </div>
         </header>
 
